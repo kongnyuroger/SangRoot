@@ -9,7 +9,9 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <View className="flex-1 items-center justify-center bg-blue-500">
+        <Text className="text-white text-xl font-bold">Hello NativeWind</Text>
+      </View>
     </View>
   );
 }
