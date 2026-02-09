@@ -1,4 +1,5 @@
-import ky, { HTTPError } from "ky";
+import ky, { HTTPError, type Options } from "ky";
+import { Platform } from "react-native";
 import {
   getAccessToken,
   getRefreshToken,
@@ -8,8 +9,29 @@ import {
   setRefreshToken,
 } from "./authStorage";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
-type RetryOptions = {
+// Backend URL configuration for different platforms
+// IMPORTANT: Change this based on where you're testing:
+// - iOS Simulator: "http://localhost:3000"
+// - Android Emulator: "http://10.0.2.2:3000"
+// - Physical Device: "http://YOUR_IP:3000" (e.g., "http://192.168.1.53:3000")
+
+const BACKEND_URLS = {
+  ios: "http://localhost:3000",
+  android: "http://10.0.2.2:3000",
+  // For physical device testing, uncomment and set your IP:
+  // default: "http://192.168.1.53:3000",
+};
+
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL ||
+  BACKEND_URLS[Platform.OS as keyof typeof BACKEND_URLS] ||
+  BACKEND_URLS.ios;
+
+console.log("🔧 API Configuration:");
+console.log("  Platform:", Platform.OS);
+console.log("  EXPO_PUBLIC_BACKEND_URL:", process.env.EXPO_PUBLIC_BACKEND_URL);
+console.log("  BACKEND_URL:", BACKEND_URL);
+type RetryOptions = Options & {
   _retry?: boolean;
 };
 
@@ -41,7 +63,7 @@ export const api = ky.create({
       },
     ],
     afterResponse: [
-      async ({ request, options, response, retryWithMergedOptions }) => {
+      async (request, options, response) => {
         if (response.status !== 401) return;
 
         // avoid refreshing on refresh endpoint or when explicitly flagged
@@ -65,8 +87,12 @@ export const api = ky.create({
             if (refreshRes.refreshToken)
               await setRefreshToken(refreshRes.refreshToken);
             // retry original request with new token
-            return retryWithMergedOptions({
-              headers: { authorization: `Bearer ${refreshRes.accessToken}` },
+            return ky(request, {
+              ...options,
+              headers: {
+                ...options.headers,
+                authorization: `Bearer ${refreshRes.accessToken}`,
+              },
               _retry: true,
             } as RetryOptions);
           }

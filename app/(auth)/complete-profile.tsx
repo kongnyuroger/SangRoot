@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Button, ScrollView, Text, TextInput, View } from "react-native";
-import { getAccessToken } from "../../src/lib/authStorage";
+import { api } from "../../src/lib/api";
 
 type UserRole = "DOCTOR" | "HOSPITAL" | "BLOOD_BANK";
 
@@ -71,23 +71,11 @@ export default function CompleteProfileScreen() {
 
     setIsLoading(true);
     try {
-      const token = await getAccessToken();
       const endpoint =
-        userRole === "HOSPITAL" ? "/hospitals/profile" : "/blood-banks/profile";
+        userRole === "HOSPITAL" ? "hospitals/profile" : "blood-banks/profile";
 
-      const response = await fetch(`http://localhost:3000${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update profile");
-      }
+      // Use api client (handles base URL and auth headers) and PATCH method
+      await api.patch(endpoint, { json: formData });
 
       Alert.alert("Success", "Profile completed successfully!");
 

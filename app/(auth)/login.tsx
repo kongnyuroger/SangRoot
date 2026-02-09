@@ -12,6 +12,11 @@ export default function LoginScreen() {
   const mutation = useLogin();
 
   const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Required Fields", "Please enter both email and password");
+      return;
+    }
+
     try {
       await mutation.mutateAsync({ email, password });
 

@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Alert, Button, ScrollView, Text, TextInput, View } from "react-native";
-import { setAccessToken, setRefreshToken } from "../../src/lib/authStorage";
+import * as authService from "../../src/services/auth.service";
 
 export default function AcceptInviteScreen() {
   const router = useRouter();
@@ -56,36 +56,15 @@ export default function AcceptInviteScreen() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/auth/accept-invite", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inviteId: formData.inviteId,
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-          registrationNo: formData.registrationNo,
-          specialization: formData.specialization,
-        }),
+      await authService.acceptInvite({
+        inviteId: formData.inviteId,
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        registrationNo: formData.registrationNo,
+        specialization: formData.specialization,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to accept invite");
-      }
-
-      const result = await response.json();
-
-      // Store tokens
-      if (result.accessToken) {
-        await setAccessToken(result.accessToken);
-      }
-      if (result.refreshToken) {
-        await setRefreshToken(result.refreshToken);
-      }
 
       Alert.alert("Success", "Account created successfully! Logging you in...");
       // Navigate to doctor dashboard

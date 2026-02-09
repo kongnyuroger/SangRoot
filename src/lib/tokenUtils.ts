@@ -16,23 +16,15 @@ interface DecodedToken {
  * Decode a JWT token without verification
  * NOTE: This only decodes the payload - verification should be done on the backend
  */
+import { jwtDecode } from "jwt-decode";
+
+/**
+ * Decode a JWT token without verification
+ * NOTE: This only decodes the payload - verification should be done on the backend
+ */
 export function decodeToken(token: string): DecodedToken | null {
   try {
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      console.error("Invalid token format");
-      return null;
-    }
-
-    // Decode the payload (second part)
-    const payload = parts[1];
-    // Add padding if necessary
-    const paddedPayload = payload + "=".repeat((4 - (payload.length % 4)) % 4);
-    const decoded = JSON.parse(
-      Buffer.from(paddedPayload, "base64").toString("utf-8"),
-    );
-
-    return decoded;
+    return jwtDecode<DecodedToken>(token);
   } catch (error) {
     console.error("Error decoding token:", error);
     return null;

@@ -21,11 +21,8 @@ export default function RegisterScreen() {
   const mutation = useRegister();
 
   const roles: { value: UserRole; label: string; description: string }[] = [
-    {
-      value: "DOCTOR",
-      label: "Doctor",
-      description: "Register as a healthcare professional",
-    },
+    // Doctor role removed - must use invite
+
     {
       value: "HOSPITAL",
       label: "Hospital",

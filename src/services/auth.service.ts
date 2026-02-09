@@ -71,4 +71,18 @@ export async function refreshToken(): Promise<{ accessToken?: string } | null> {
   }
 }
 
-export default { login, logout, register, refreshToken };
+// TODO: Define a type for the payload if possible
+export async function acceptInvite(
+  data: Record<string, unknown>,
+): Promise<LoginRes> {
+  const res = await rawClient
+    .post("auth/accept-invite", { json: data })
+    .json<LoginRes>();
+
+  if (res.accessToken) await setAccessToken(res.accessToken);
+  if (res.refreshToken) await setRefreshToken(res.refreshToken ?? "");
+
+  return res;
+}
+
+export default { login, logout, register, refreshToken, acceptInvite };
