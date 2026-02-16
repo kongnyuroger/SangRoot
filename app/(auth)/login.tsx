@@ -1,6 +1,18 @@
 import { useRouter } from "expo-router";
 import React from "react";
-import { Alert, Button, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { AuthCard } from "../../src/components/auth/AuthCard";
+import { AuthHeader } from "../../src/components/auth/AuthHeader";
+import { StyledButton } from "../../src/components/auth/StyledButton";
+import { StyledInput } from "../../src/components/auth/StyledInput";
+import { colors, spacing, typography } from "../../src/constants/theme";
 import { useLogin } from "../../src/hooks/useAuthHooks";
 import { getAccessToken } from "../../src/lib/authStorage";
 import { getTokenRole } from "../../src/lib/tokenUtils";
@@ -41,254 +53,194 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{ flex: 1, padding: 20, justifyContent: "center" }}
-    >
-      <View>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "bold",
-            marginBottom: 24,
-            textAlign: "center",
-          }}
-        >
-          Login to SangRoot
-        </Text>
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AuthHeader
+          icon="medical"
+          title="Healthcare Portal"
+          subtitle="Secure access for medical professionals"
+        />
 
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Email
-          </Text>
-          <TextInput
-            placeholder="Enter your email"
+        <AuthCard>
+          <StyledInput
+            label="Email Address"
+            icon="mail-outline"
+            placeholder="name@hospital.com"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Password
-          </Text>
-          <TextInput
-            placeholder="Enter your password"
+          <StyledInput
+            label="Password"
+            icon="lock-closed-outline"
+            placeholder="••••••••"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
+            rightAction={{
+              text: "Forgot Password?",
+              onPress: () => Alert.alert("Info", "Password reset coming soon"),
             }}
           />
-        </View>
 
-        <Button
-          title={mutation.isLoading ? "Logging in..." : "Login"}
-          onPress={handleLogin}
-          disabled={mutation.isLoading}
-          color="#e74c3c"
-        />
+          <StyledButton
+            title={mutation.isLoading ? "Signing in..." : "Sign In"}
+            onPress={handleLogin}
+            loading={mutation.isLoading}
+            disabled={mutation.isLoading}
+          />
+        </AuthCard>
 
-        <View style={{ height: 16 }} />
+        {/* Register New Entity Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>REGISTER NEW ENTITY</Text>
 
-        <View
-          style={{
-            borderTopWidth: 1,
-            borderTopColor: "#eee",
-            paddingTop: 16,
-            marginTop: 16,
-          }}
-        >
-          <Text
-            style={{ textAlign: "center", color: "#666", marginBottom: 12 }}
+          <TouchableOpacity
+            style={styles.optionCard}
+            onPress={() => router.push("/(auth)/register")}
           >
-            Don't have an account?
-          </Text>
-          <Button
-            title="Create Account"
+            <View style={styles.optionIcon}>
+              <Text style={styles.optionIconText}>🏥</Text>
+            </View>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionTitle}>Hospital</Text>
+              <Text style={styles.optionSubtitle}>
+                Register your medical facility
+              </Text>
+            </View>
+            <Text style={styles.optionArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.optionCard}
             onPress={() => router.push("/(auth)/register")}
-            color="#3498db"
-          />
-        </View>
-
-        <View style={{ height: 12 }} />
-
-        <View
-          style={{ borderTopWidth: 1, borderTopColor: "#eee", paddingTop: 16 }}
-        >
-          <Text
-            style={{ textAlign: "center", color: "#666", marginBottom: 12 }}
           >
-            Have an invite code?
-          </Text>
-          <Button
-            title="Accept Invite"
+            <View style={styles.optionIcon}>
+              <Text style={styles.optionIconText}>🩸</Text>
+            </View>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionTitle}>Blood Bank</Text>
+              <Text style={styles.optionSubtitle}>
+                Manage donations and supply
+              </Text>
+            </View>
+            <Text style={styles.optionArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.optionCard}
             onPress={() => router.push("/(auth)/accept-invite")}
-            color="#27ae60"
-          />
+          >
+            <View style={styles.optionIcon}>
+              <Text style={styles.optionIconText}>👨‍⚕️</Text>
+            </View>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionTitle}>Doctor</Text>
+              <Text style={styles.optionSubtitle}>
+                Join as a verified professional
+              </Text>
+            </View>
+            <Text style={styles.optionArrow}>›</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Support Link */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Need help? </Text>
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert("Support", "Contact support coming soon")
+            }
+          >
+            <Text style={styles.footerLink}>Contact Support</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-/*
-  return (
-    <ScrollView contentContainerStyle={{ flex: 1, padding: 20, justifyContent: "center" }}>
-      <View>
-        <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 24, textAlign: "center" }}>Login to SangRoot</Text>
-        
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>Email</Text>
-          <TextInput
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
-          />
-        </View>
-
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>Password</Text>
-          <TextInput
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
-          />
-        </View>
-
-        <Button
-          title={mutation.isLoading ? "Logging in..." : "Login"}
-          onPress={handleLogin}
-          disabled={mutation.isLoading}
-          color="#e74c3c"
-        />
-
-        <View style={{ height: 16 }} />
-
-        <View style={{ borderTopWidth: 1, borderTopColor: "#eee", paddingTop: 16, marginTop: 16 }}>
-          <Text style={{ textAlign: "center", color: "#666", marginBottom: 12 }}>Don't have an account?</Text>
-          <Button
-            title="Create Account"
-            onPress={() => router.push("/(auth)/register")}
-            color="#3498db"
-          />
-        </View>
-
-        <View style={{ height: 12 }} />
-
-        <View style={{ borderTopWidth: 1, borderTopColor: "#eee", paddingTop: 16 }}>
-          <Text style={{ textAlign: "center", color: "#666", marginBottom: 12 }}>Have an invite code?</Text>
-          <Button
-            title="Accept Invite"
-            onPress={() => router.push("/(auth)/accept-invite")}
-            color="#27ae60"
-          />
-        </View>
-      </View>
-    </ScrollView>
-  );
-}
-
-  return (
-    <ScrollView contentContainerStyle={{ flex: 1, padding: 20, justifyContent: "center" }}>
-      <View>
-        <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 24, textAlign: "center" }}>Login to SangRoot</Text>
-        
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>Email</Text>
-          <TextInput
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
-          />
-        </View>
-
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>Password</Text>
-          <TextInput
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
-          />
-        </View>
-
-        <Button
-          title={mutation.isLoading ? "Logging in..." : "Login"}
-          onPress={handleLogin}
-          disabled={mutation.isLoading}
-          color="#e74c3c"
-        />
-
-        <View style={{ height: 16 }} />
-
-        <View style={{ borderTopWidth: 1, borderTopColor: "#eee", paddingTop: 16, marginTop: 16 }}>
-          <Text style={{ textAlign: "center", color: "#666", marginBottom: 12 }}>Don't have an account?</Text>
-          <Button
-            title="Create Account"
-            onPress={() => router.push("/(auth)/register")}
-            color="#3498db"
-          />
-        </View>
-
-        <View style={{ height: 12 }} />
-
-        <View style={{ borderTopWidth: 1, borderTopColor: "#eee", paddingTop: 16 }}>
-          <Text style={{ textAlign: "center", color: "#666", marginBottom: 12 }}>Have an invite code?</Text>
-          <Button
-            title="Accept Invite"
-            onPress={() => router.push("/(auth)/accept-invite")}
-            color="#27ae60"
-          />
-        </View>
-      </View>
-    </ScrollView>
-  );
-}
-*/
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: spacing.xl,
+    justifyContent: "center",
+  },
+  section: {
+    marginTop: spacing["2xl"],
+  },
+  sectionTitle: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    marginBottom: spacing.md,
+    textAlign: "center",
+  },
+  optionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  optionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+  },
+  optionIconText: {
+    fontSize: 24,
+  },
+  optionContent: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  optionSubtitle: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textSecondary,
+  },
+  optionArrow: {
+    fontSize: 24,
+    color: colors.textLight,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: spacing["2xl"],
+  },
+  footerText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textSecondary,
+  },
+  footerLink: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.primary,
+  },
+});

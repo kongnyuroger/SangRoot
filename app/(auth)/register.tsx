@@ -2,13 +2,22 @@ import { useRouter } from "expo-router";
 import React from "react";
 import {
   Alert,
-  Button,
   ScrollView,
+  StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { AuthCard } from "../../src/components/auth/AuthCard";
+import { AuthHeader } from "../../src/components/auth/AuthHeader";
+import { StyledButton } from "../../src/components/auth/StyledButton";
+import { StyledInput } from "../../src/components/auth/StyledInput";
+import {
+  borderRadius,
+  colors,
+  spacing,
+  typography,
+} from "../../src/constants/theme";
 import { useRegister } from "../../src/hooks/useAuthHooks";
 
 type UserRole = "DOCTOR" | "HOSPITAL" | "BLOOD_BANK";
@@ -20,18 +29,23 @@ export default function RegisterScreen() {
   const [selectedRole, setSelectedRole] = React.useState<UserRole | null>(null);
   const mutation = useRegister();
 
-  const roles: { value: UserRole; label: string; description: string }[] = [
-    // Doctor role removed - must use invite
-
+  const roles: {
+    value: UserRole;
+    label: string;
+    description: string;
+    icon: string;
+  }[] = [
     {
       value: "HOSPITAL",
       label: "Hospital",
       description: "Register as a hospital administrator",
+      icon: "🏥",
     },
     {
       value: "BLOOD_BANK",
       label: "Blood Bank",
       description: "Register as a blood bank administrator",
+      icon: "🩸",
     },
   ];
 
@@ -60,110 +74,173 @@ export default function RegisterScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{ flex: 1, padding: 20, justifyContent: "center" }}
-    >
-      <View>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "bold",
-            marginBottom: 24,
-            textAlign: "center",
-          }}
-        >
-          Create Account
-        </Text>
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AuthHeader
+          icon="person-add-outline"
+          title="Create Account"
+          subtitle="Register your organization"
+        />
 
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 14, fontWeight: "600", marginBottom: 12 }}>
-            Select Your Role
-          </Text>
-          <View style={{ gap: 12 }}>
-            {roles.map((role) => (
-              <TouchableOpacity
-                key={role.value}
-                onPress={() => setSelectedRole(role.value)}
-                style={{
-                  borderWidth: 2,
-                  borderColor: selectedRole === role.value ? "#e74c3c" : "#ddd",
-                  borderRadius: 8,
-                  padding: 12,
-                  backgroundColor:
-                    selectedRole === role.value ? "#ffe0d6" : "#fff",
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    color: selectedRole === role.value ? "#e74c3c" : "#333",
-                  }}
+        <AuthCard>
+          {/* Role Selection */}
+          <View style={styles.roleSection}>
+            <Text style={styles.roleLabel}>Select Your Role</Text>
+            <View style={styles.roleOptions}>
+              {roles.map((role) => (
+                <TouchableOpacity
+                  key={role.value}
+                  onPress={() => setSelectedRole(role.value)}
+                  style={[
+                    styles.roleCard,
+                    selectedRole === role.value && styles.roleCardSelected,
+                  ]}
                 >
-                  {role.label}
-                </Text>
-                <Text style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
-                  {role.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <View style={styles.roleIconContainer}>
+                    <Text style={styles.roleIcon}>{role.icon}</Text>
+                  </View>
+                  <View style={styles.roleContent}>
+                    <Text
+                      style={[
+                        styles.roleTitle,
+                        selectedRole === role.value && styles.roleTitleSelected,
+                      ]}
+                    >
+                      {role.label}
+                    </Text>
+                    <Text style={styles.roleDescription}>
+                      {role.description}
+                    </Text>
+                  </View>
+                  {selectedRole === role.value && (
+                    <View style={styles.checkmark}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
 
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Email
-          </Text>
-          <TextInput
-            placeholder="Enter your email"
+          <StyledInput
+            label="Email Address"
+            icon="mail-outline"
+            placeholder="name@hospital.com"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Password
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Password"
+            icon="lock-closed-outline"
             placeholder="Create a password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        <Button
-          title={mutation.isLoading ? "Creating Account..." : "Register"}
-          onPress={handleRegister}
-          disabled={mutation.isLoading || !selectedRole}
-          color="#27ae60"
-        />
+          <StyledButton
+            title={mutation.isLoading ? "Creating Account..." : "Register"}
+            onPress={handleRegister}
+            loading={mutation.isLoading}
+            disabled={mutation.isLoading || !selectedRole}
+          />
 
-        <View style={{ height: 12 }} />
+          <View style={styles.divider} />
 
-        <Button
-          title="Back to Login"
-          onPress={() => router.push("/(auth)/login")}
-          color="#95a5a6"
-        />
-      </View>
-    </ScrollView>
+          <StyledButton
+            title="Back to Login"
+            onPress={() => router.push("/(auth)/login")}
+            variant="outline"
+          />
+        </AuthCard>
+      </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: spacing.xl,
+    justifyContent: "center",
+  },
+  roleSection: {
+    marginBottom: spacing.xl,
+  },
+  roleLabel: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  roleOptions: {
+    gap: spacing.md,
+  },
+  roleCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
+    backgroundColor: colors.white,
+  },
+  roleCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
+  },
+  roleIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+  },
+  roleIcon: {
+    fontSize: 24,
+  },
+  roleContent: {
+    flex: 1,
+  },
+  roleTitle: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  roleTitleSelected: {
+    color: colors.primary,
+  },
+  roleDescription: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textSecondary,
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkmarkText: {
+    color: colors.white,
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+  },
+  divider: {
+    height: spacing.lg,
+  },
+});

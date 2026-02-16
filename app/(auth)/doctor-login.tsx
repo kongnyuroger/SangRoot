@@ -1,6 +1,11 @@
 import { useRouter } from "expo-router";
 import React from "react";
-import { Alert, Button, Text, TextInput, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { AuthCard } from "../../src/components/auth/AuthCard";
+import { AuthHeader } from "../../src/components/auth/AuthHeader";
+import { StyledButton } from "../../src/components/auth/StyledButton";
+import { StyledInput } from "../../src/components/auth/StyledInput";
+import { colors, spacing } from "../../src/constants/theme";
 import { useLogin } from "../../src/hooks/useAuthHooks";
 
 export default function DoctorLoginScreen() {
@@ -10,6 +15,11 @@ export default function DoctorLoginScreen() {
   const mutation = useLogin();
 
   const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Required Fields", "Please enter both email and password");
+      return;
+    }
+
     try {
       await mutation.mutateAsync({ email, password });
       // after successful login, navigate to root (app will fetch profile)
@@ -21,34 +31,68 @@ export default function DoctorLoginScreen() {
   };
 
   return (
-    <View style={{ flex: 1, padding: 20, justifyContent: "center" }}>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>
-        Doctor Login
-      </Text>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={{ borderWidth: 1, padding: 8, marginBottom: 8 }}
-      />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={{ borderWidth: 1, padding: 8, marginBottom: 12 }}
-      />
-      <Button
-        title={mutation.isLoading ? "Logging in..." : "Login"}
-        onPress={handleLogin}
-      />
-      <View style={{ height: 12 }} />
-      <Button
-        title="Register"
-        onPress={() => router.push("/(auth)/register")}
-      />
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AuthHeader
+          icon="medical-outline"
+          title="Doctor Login"
+          subtitle="Access your medical dashboard"
+        />
+
+        <AuthCard>
+          <StyledInput
+            label="Email Address"
+            icon="mail-outline"
+            placeholder="doctor@hospital.com"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+
+          <StyledInput
+            label="Password"
+            icon="lock-closed-outline"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+
+          <StyledButton
+            title={mutation.isLoading ? "Logging in..." : "Login"}
+            onPress={handleLogin}
+            loading={mutation.isLoading}
+            disabled={mutation.isLoading}
+          />
+
+          <View style={styles.divider} />
+
+          <StyledButton
+            title="Register"
+            onPress={() => router.push("/(auth)/register")}
+            variant="outline"
+          />
+        </AuthCard>
+      </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: spacing.xl,
+    justifyContent: "center",
+  },
+  divider: {
+    height: spacing.md,
+  },
+});

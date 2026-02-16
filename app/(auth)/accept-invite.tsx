@@ -1,6 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { Alert, Button, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { AuthCard } from "../../src/components/auth/AuthCard";
+import { AuthHeader } from "../../src/components/auth/AuthHeader";
+import { StyledButton } from "../../src/components/auth/StyledButton";
+import { StyledInput } from "../../src/components/auth/StyledInput";
+import { colors, spacing } from "../../src/constants/theme";
 import * as authService from "../../src/services/auth.service";
 
 export default function AcceptInviteScreen() {
@@ -79,164 +84,104 @@ export default function AcceptInviteScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{ flex: 1, padding: 20, justifyContent: "center" }}
-    >
-      <View>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "bold",
-            marginBottom: 12,
-            textAlign: "center",
-          }}
-        >
-          Accept Invite
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: "#666",
-            marginBottom: 24,
-            textAlign: "center",
-          }}
-        >
-          Complete your doctor registration
-        </Text>
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AuthHeader
+          icon="medical-outline"
+          title="Accept Invite"
+          subtitle="Complete your doctor registration"
+        />
 
-        {/* Full Name */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Full Name *
-          </Text>
-          <TextInput
+        <AuthCard>
+          <StyledInput
+            label="Full Name *"
+            icon="person-outline"
             placeholder="Enter your full name"
             value={formData.name}
             onChangeText={(value) => handleInputChange("name", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Email */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Email *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Email *"
+            icon="mail-outline"
             placeholder="Enter your email"
             value={formData.email}
             onChangeText={(value) => handleInputChange("email", value)}
             autoCapitalize="none"
             keyboardType="email-address"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Password */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Password *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Password *"
+            icon="lock-closed-outline"
             placeholder="Create a password (min 8 characters)"
             value={formData.password}
             onChangeText={(value) => handleInputChange("password", value)}
             secureTextEntry
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Phone */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Phone Number *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Phone Number *"
+            icon="call-outline"
             placeholder="Enter your phone number"
             value={formData.phone}
             onChangeText={(value) => handleInputChange("phone", value)}
             keyboardType="phone-pad"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Registration Number */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Medical Registration Number *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Medical Registration Number *"
+            icon="card-outline"
             placeholder="Enter your registration number"
             value={formData.registrationNo}
             onChangeText={(value) => handleInputChange("registrationNo", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Specialization */}
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Specialization *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Specialization *"
+            icon="fitness-outline"
             placeholder="Enter your medical specialization"
             value={formData.specialization}
             onChangeText={(value) => handleInputChange("specialization", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        <Button
-          title={isLoading ? "Creating Account..." : "Accept Invite & Register"}
-          onPress={handleAcceptInvite}
-          disabled={isLoading}
-          color="#27ae60"
-        />
+          <StyledButton
+            title={
+              isLoading ? "Creating Account..." : "Accept Invite & Register"
+            }
+            onPress={handleAcceptInvite}
+            loading={isLoading}
+            disabled={isLoading}
+          />
 
-        <View style={{ height: 12 }} />
+          <View style={styles.divider} />
 
-        <Button
-          title="Back to Login"
-          onPress={() => router.back()}
-          color="#95a5a6"
-        />
-      </View>
-    </ScrollView>
+          <StyledButton
+            title="Back to Login"
+            onPress={() => router.back()}
+            variant="outline"
+          />
+        </AuthCard>
+      </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: spacing.xl,
+    paddingTop: spacing["2xl"],
+    paddingBottom: spacing["2xl"],
+  },
+  divider: {
+    height: spacing.md,
+  },
+});

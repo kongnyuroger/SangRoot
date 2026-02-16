@@ -1,6 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Button, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { AuthCard } from "../../src/components/auth/AuthCard";
+import { AuthHeader } from "../../src/components/auth/AuthHeader";
+import { StyledButton } from "../../src/components/auth/StyledButton";
+import { StyledInput } from "../../src/components/auth/StyledInput";
+import { colors, spacing } from "../../src/constants/theme";
 import { api } from "../../src/lib/api";
 
 type UserRole = "DOCTOR" | "HOSPITAL" | "BLOOD_BANK";
@@ -94,182 +99,112 @@ export default function CompleteProfileScreen() {
     }
   };
 
-  return (
-    <ScrollView
-      contentContainerStyle={{ flex: 1, padding: 20, justifyContent: "center" }}
-    >
-      <View>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "bold",
-            marginBottom: 12,
-            textAlign: "center",
-          }}
-        >
-          {userRole === "HOSPITAL" ? "Hospital" : "Blood Bank"} Profile
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: "#666",
-            marginBottom: 24,
-            textAlign: "center",
-          }}
-        >
-          Complete your profile information
-        </Text>
+  const entityType = userRole === "HOSPITAL" ? "Hospital" : "Blood Bank";
+  const icon = userRole === "HOSPITAL" ? "business-outline" : "water-outline";
 
-        {/* Organization Name */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            {userRole === "HOSPITAL" ? "Hospital" : "Blood Bank"} Name *
-          </Text>
-          <TextInput
-            placeholder={
-              userRole === "HOSPITAL"
-                ? "Enter hospital name"
-                : "Enter blood bank name"
-            }
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AuthHeader
+          icon={icon}
+          title={`${entityType} Profile`}
+          subtitle="Complete your profile information"
+        />
+
+        <AuthCard>
+          <StyledInput
+            label={`${entityType} Name *`}
+            icon="business-outline"
+            placeholder={`Enter ${entityType.toLowerCase()} name`}
             value={formData.name}
             onChangeText={(value) => handleInputChange("name", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Address */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Address *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Address *"
+            icon="location-outline"
             placeholder="Enter street address"
             value={formData.address}
             onChangeText={(value) => handleInputChange("address", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* City */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            City *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="City *"
+            icon="navigate-outline"
             placeholder="Enter city"
             value={formData.city}
             onChangeText={(value) => handleInputChange("city", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* State */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            State
-          </Text>
-          <TextInput
+          <StyledInput
+            label="State"
+            icon="map-outline"
             placeholder="Enter state"
             value={formData.state}
             onChangeText={(value) => handleInputChange("state", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Pincode */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Pincode
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Pincode"
+            icon="pin-outline"
             placeholder="Enter pincode"
             value={formData.pincode}
             onChangeText={(value) => handleInputChange("pincode", value)}
             keyboardType="numeric"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* Phone */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            Phone *
-          </Text>
-          <TextInput
+          <StyledInput
+            label="Phone *"
+            icon="call-outline"
             placeholder="Enter phone number"
             value={formData.phone}
             onChangeText={(value) => handleInputChange("phone", value)}
             keyboardType="phone-pad"
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        {/* License Number */}
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4, color: "#666" }}>
-            {userRole === "HOSPITAL" ? "Hospital" : "Blood Bank"} License Number
-          </Text>
-          <TextInput
+          <StyledInput
+            label={`${entityType} License Number`}
+            icon="document-text-outline"
             placeholder="Enter license number"
             value={formData.licenseNumber}
             onChangeText={(value) => handleInputChange("licenseNumber", value)}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 16,
-            }}
           />
-        </View>
 
-        <Button
-          title={isLoading ? "Saving..." : "Complete Profile"}
-          onPress={handleSubmitProfile}
-          disabled={isLoading}
-          color="#27ae60"
-        />
+          <StyledButton
+            title={isLoading ? "Saving..." : "Complete Profile"}
+            onPress={handleSubmitProfile}
+            loading={isLoading}
+            disabled={isLoading}
+          />
 
-        <View style={{ height: 12 }} />
+          <View style={styles.divider} />
 
-        <Button title="Back" onPress={() => router.back()} color="#95a5a6" />
-      </View>
-    </ScrollView>
+          <StyledButton
+            title="Back"
+            onPress={() => router.back()}
+            variant="outline"
+          />
+        </AuthCard>
+      </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: spacing.xl,
+    paddingTop: spacing["2xl"],
+    paddingBottom: spacing["2xl"],
+  },
+  divider: {
+    height: spacing.md,
+  },
+});
