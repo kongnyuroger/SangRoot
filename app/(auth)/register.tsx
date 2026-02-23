@@ -1,246 +1,267 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { AuthCard } from "../../src/components/auth/AuthCard";
-import { AuthHeader } from "../../src/components/auth/AuthHeader";
-import { StyledButton } from "../../src/components/auth/StyledButton";
-import { StyledInput } from "../../src/components/auth/StyledInput";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Card, Input } from "../../src/components/ui";
 import {
   borderRadius,
   colors,
   spacing,
   typography,
 } from "../../src/constants/theme";
+import { useAuth } from "../../src/context";
 import { useRegister } from "../../src/hooks/useAuthHooks";
 
-type UserRole = "DOCTOR" | "HOSPITAL" | "BLOOD_BANK";
+type OrgRole = "HOSPITAL" | "BLOOD_BANK";
+
+const roleOptions: {
+  value: OrgRole;
+  label: string;
+  icon: string;
+  desc: string;
+}[] = [
+  {
+    value: "HOSPITAL",
+    label: "Hospital",
+    icon: "🏥",
+    desc: "Register as hospital administrator",
+  },
+  {
+    value: "BLOOD_BANK",
+    label: "Blood Bank",
+    icon: "🩸",
+    desc: "Manage donations and blood supply",
+  },
+];
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [selectedRole, setSelectedRole] = React.useState<UserRole | null>(null);
+  const insets = useSafeAreaInsets();
+  const { refreshUser } = useAuth();
   const mutation = useRegister();
 
-  const roles: {
-    value: UserRole;
-    label: string;
-    description: string;
-    icon: string;
-  }[] = [
-    {
-      value: "HOSPITAL",
-      label: "Hospital",
-      description: "Register as a hospital administrator",
-      icon: "🏥",
-    },
-    {
-      value: "BLOOD_BANK",
-      label: "Blood Bank",
-      description: "Register as a blood bank administrator",
-      icon: "🩸",
-    },
-  ];
+  const [role, setRole] = useState<OrgRole>("HOSPITAL");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!email.trim()) e.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Enter a valid email";
+    if (!password) e.password = "Password is required";
+    else if (password.length < 8) e.password = "Minimum 8 characters";
+    if (confirmPassword !== password)
+      e.confirmPassword = "Passwords do not match";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   const handleRegister = async () => {
-    if (!selectedRole) {
-      Alert.alert("Role Required", "Please select a role");
-      return;
-    }
-
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Required Fields", "Please fill in all fields");
-      return;
-    }
-
+    if (!validate()) return;
     try {
-      await mutation.mutateAsync({ email, password, role: selectedRole });
-      // after register, go to complete profile with role parameter
-      router.push({
-        pathname: "/(auth)/complete-profile",
-        params: { role: selectedRole },
-      });
+      await mutation.mutateAsync({ email, password, role });
+      await refreshUser();
+      // Guard in _layout.tsx will redirect to complete-profile
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : "Unknown error";
-      Alert.alert("Registration failed", errorMessage);
+      const msg = e instanceof Error ? e.message : "Registration failed";
+      setErrors({ email: msg });
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View
+        style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
+      >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Register</Text>
+        <Text style={styles.headerSubtitle}>
+          Create your organisation account
+        </Text>
+      </View>
+
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <AuthHeader
-          icon="person-add-outline"
-          title="Create Account"
-          subtitle="Register your organization"
-        />
-
-        <AuthCard>
-          {/* Role Selection */}
-          <View style={styles.roleSection}>
-            <Text style={styles.roleLabel}>Select Your Role</Text>
-            <View style={styles.roleOptions}>
-              {roles.map((role) => (
-                <TouchableOpacity
-                  key={role.value}
-                  onPress={() => setSelectedRole(role.value)}
-                  style={[
-                    styles.roleCard,
-                    selectedRole === role.value && styles.roleCardSelected,
-                  ]}
-                >
-                  <View style={styles.roleIconContainer}>
-                    <Text style={styles.roleIcon}>{role.icon}</Text>
+        <Card padding="lg" style={styles.formCard}>
+          {/* Role selector */}
+          <Text style={styles.roleLabel}>Organisation Type</Text>
+          <View style={styles.roleRow}>
+            {roleOptions.map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  styles.roleChip,
+                  role === opt.value && styles.roleChipActive,
+                ]}
+                onPress={() => setRole(opt.value)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.roleEmoji}>{opt.icon}</Text>
+                <View>
+                  <Text
+                    style={[
+                      styles.roleChipLabel,
+                      role === opt.value && styles.roleChipLabelActive,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                  <Text style={styles.roleChipDesc}>{opt.desc}</Text>
+                </View>
+                {role === opt.value && (
+                  <View style={styles.checkmark}>
+                    <Ionicons name="checkmark" size={14} color={colors.white} />
                   </View>
-                  <View style={styles.roleContent}>
-                    <Text
-                      style={[
-                        styles.roleTitle,
-                        selectedRole === role.value && styles.roleTitleSelected,
-                      ]}
-                    >
-                      {role.label}
-                    </Text>
-                    <Text style={styles.roleDescription}>
-                      {role.description}
-                    </Text>
-                  </View>
-                  {selectedRole === role.value && (
-                    <View style={styles.checkmark}>
-                      <Text style={styles.checkmarkText}>✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+                )}
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <StyledInput
+          <Input
             label="Email Address"
             icon="mail-outline"
-            placeholder="name@hospital.com"
+            placeholder="admin@hospital.com"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            error={errors.email}
           />
-
-          <StyledInput
+          <Input
             label="Password"
             icon="lock-closed-outline"
-            placeholder="Create a password"
+            placeholder="Min. 8 characters"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            secureToggle
+            error={errors.password}
+          />
+          <Input
+            label="Confirm Password"
+            icon="shield-checkmark-outline"
+            placeholder="Re-enter password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            secureToggle
+            error={errors.confirmPassword}
           />
 
-          <StyledButton
-            title={mutation.isLoading ? "Creating Account..." : "Register"}
+          <Button
+            title="Create Account"
             onPress={handleRegister}
             loading={mutation.isLoading}
-            disabled={mutation.isLoading || !selectedRole}
+            disabled={mutation.isLoading}
+            size="lg"
+            style={styles.submitBtn}
           />
+        </Card>
 
-          <View style={styles.divider} />
-
-          <StyledButton
-            title="Back to Login"
-            onPress={() => router.push("/(auth)/login")}
-            variant="outline"
-          />
-        </AuthCard>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+            <Text style={styles.footerLink}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
+  container: { flex: 1, backgroundColor: colors.background },
+  headerStrip: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing["2xl"],
+    paddingBottom: spacing["3xl"],
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
+  backBtn: { marginBottom: spacing.xl },
+  backText: {
+    fontSize: typography.fontSize.sm,
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: typography.fontWeight.medium,
+  },
+  headerTitle: {
+    fontSize: typography.fontSize["4xl"],
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: spacing.sm,
+  },
+  headerSubtitle: {
+    fontSize: typography.fontSize.base,
+    color: "rgba(255,255,255,0.75)",
+  },
+  scroll: { flex: 1 },
   scrollContent: {
-    flexGrow: 1,
-    padding: spacing.xl,
-    justifyContent: "center",
+    padding: spacing["2xl"],
+    paddingTop: spacing["3xl"],
+    gap: spacing["2xl"],
   },
-  roleSection: {
-    marginBottom: spacing.xl,
-  },
+  formCard: { marginTop: -spacing["4xl"] },
   roleLabel: {
     fontSize: typography.fontSize.sm,
     fontWeight: typography.fontWeight.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
   },
-  roleOptions: {
-    gap: spacing.md,
-  },
-  roleCard: {
+  roleRow: { gap: spacing.md, marginBottom: spacing.xl },
+  roleChip: {
     flexDirection: "row",
     alignItems: "center",
+    gap: spacing.md,
     borderWidth: 2,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
     backgroundColor: colors.white,
   },
-  roleCardSelected: {
+  roleChipActive: {
     borderColor: colors.primary,
     backgroundColor: colors.primaryLight,
   },
-  roleIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.white,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: spacing.md,
-  },
-  roleIcon: {
-    fontSize: 24,
-  },
-  roleContent: {
-    flex: 1,
-  },
-  roleTitle: {
+  roleEmoji: { fontSize: 22 },
+  roleChipLabel: {
     fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.semibold,
+    fontWeight: typography.fontWeight.bold,
     color: colors.textPrimary,
-    marginBottom: 2,
   },
-  roleTitleSelected: {
-    color: colors.primary,
-  },
-  roleDescription: {
-    fontSize: typography.fontSize.sm,
+  roleChipLabelActive: { color: colors.primaryDark },
+  roleChipDesc: {
+    fontSize: typography.fontSize.xs,
     color: colors.textSecondary,
   },
   checkmark: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    marginLeft: "auto",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
   },
-  checkmarkText: {
-    color: colors.white,
+  submitBtn: { marginTop: spacing.md },
+  footer: { flexDirection: "row", justifyContent: "center" },
+  footerText: { fontSize: typography.fontSize.sm, color: colors.textSecondary },
+  footerLink: {
     fontSize: typography.fontSize.sm,
     fontWeight: typography.fontWeight.bold,
-  },
-  divider: {
-    height: spacing.lg,
+    color: colors.primary,
   },
 });
