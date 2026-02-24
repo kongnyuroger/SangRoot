@@ -1,6 +1,13 @@
 import { useRouter } from "expo-router";
 import React from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { AuthCard } from "../../src/components/auth/AuthCard";
 import { AuthHeader } from "../../src/components/auth/AuthHeader";
 import { StyledButton } from "../../src/components/auth/StyledButton";
@@ -31,58 +38,64 @@ export default function DoctorLoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <AuthHeader
-          icon="medical-outline"
-          title="Doctor Login"
-          subtitle="Access your medical dashboard"
-        />
-
-        <AuthCard>
-          <StyledInput
-            label="Email Address"
-            icon="mail-outline"
-            placeholder="doctor@hospital.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <AuthHeader
+            icon="medical-outline"
+            title="Doctor Login"
+            subtitle="Access your medical dashboard"
           />
 
-          <StyledInput
-            label="Password"
-            icon="lock-closed-outline"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <AuthCard>
+            <StyledInput
+              label="Email Address"
+              icon="mail-outline"
+              placeholder="doctor@hospital.com"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
 
-          <StyledButton
-            title={mutation.isLoading ? "Logging in..." : "Login"}
-            onPress={handleLogin}
-            loading={mutation.isLoading}
-            disabled={mutation.isLoading}
-          />
+            <StyledInput
+              label="Password"
+              icon="lock-closed-outline"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
 
-          <View style={styles.divider} />
+            <StyledButton
+              title={mutation.isLoading ? "Logging in..." : "Login"}
+              onPress={handleLogin}
+              loading={mutation.isLoading}
+              disabled={mutation.isLoading}
+            />
 
-          <StyledButton
-            title="Register"
-            onPress={() => router.push("/(auth)/register")}
-            variant="outline"
-          />
-        </AuthCard>
-      </ScrollView>
-    </View>
+            <View style={styles.divider} />
+
+            <StyledButton
+              title="Register"
+              onPress={() => router.push("/(auth)/register")}
+              variant="outline"
+            />
+          </AuthCard>
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: {
     flex: 1,
     backgroundColor: colors.background,

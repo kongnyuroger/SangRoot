@@ -1,6 +1,13 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, Input } from "../../src/components/ui";
 import { colors, spacing, typography } from "../../src/constants/theme";
@@ -77,111 +84,117 @@ export default function CompleteProfileScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Sticky header */}
-      <View style={styles.stickyHeader}>
-        <Text style={styles.headerTitle}>Complete Profile</Text>
-        <Text style={styles.headerSub}>
-          Required before accessing your dashboard
-        </Text>
-        {/* Progress bar */}
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
-        </View>
-        <Text style={styles.progressLabel}>{progress}% complete</Text>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Card padding="lg">
-          <Text style={styles.sectionTitle}>{entityType} Information</Text>
-
-          <Input
-            label={`${entityType} Name *`}
-            icon="business-outline"
-            placeholder={`Enter ${entityType.toLowerCase()} name`}
-            value={formData.name}
-            onChangeText={set("name")}
-            error={errors.name}
-          />
-          <Input
-            label={`License Number`}
-            icon="document-text-outline"
-            placeholder="Registration / license number"
-            value={formData.licenseNumber}
-            onChangeText={set("licenseNumber")}
-          />
-        </Card>
-
-        <Card padding="lg">
-          <Text style={styles.sectionTitle}>Contact & Location</Text>
-
-          <Input
-            label="Phone *"
-            icon="call-outline"
-            placeholder="+91 00000 00000"
-            value={formData.phone}
-            onChangeText={set("phone")}
-            keyboardType="phone-pad"
-            error={errors.phone}
-          />
-          <Input
-            label="Street Address *"
-            icon="location-outline"
-            placeholder="Building, street, area"
-            value={formData.address}
-            onChangeText={set("address")}
-            error={errors.address}
-          />
-          <Input
-            label="City *"
-            icon="navigate-outline"
-            placeholder="City"
-            value={formData.city}
-            onChangeText={set("city")}
-            error={errors.city}
-          />
-          <View style={styles.row}>
-            <View style={styles.flex1}>
-              <Input
-                label="State"
-                icon="map-outline"
-                placeholder="State"
-                value={formData.state}
-                onChangeText={set("state")}
-              />
-            </View>
-            <View style={styles.flex1}>
-              <Input
-                label="Pincode"
-                icon="pin-outline"
-                placeholder="000000"
-                value={formData.pincode}
-                onChangeText={set("pincode")}
-                keyboardType="numeric"
-              />
-            </View>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        {/* Sticky header */}
+        <View style={styles.stickyHeader}>
+          <Text style={styles.headerTitle}>Complete Profile</Text>
+          <Text style={styles.headerSub}>
+            Required before accessing your dashboard
+          </Text>
+          {/* Progress bar */}
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
-        </Card>
+          <Text style={styles.progressLabel}>{progress}% complete</Text>
+        </View>
 
-        <Button
-          title="Save & Continue"
-          onPress={handleSubmit}
-          loading={isLoading}
-          disabled={isLoading}
-          size="lg"
-          icon="checkmark-circle-outline"
-        />
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Card padding="lg">
+            <Text style={styles.sectionTitle}>{entityType} Information</Text>
 
-        <View style={styles.spacer} />
-      </ScrollView>
-    </View>
+            <Input
+              label={`${entityType} Name *`}
+              icon="business-outline"
+              placeholder={`Enter ${entityType.toLowerCase()} name`}
+              value={formData.name}
+              onChangeText={set("name")}
+              error={errors.name}
+            />
+            <Input
+              label={`License Number`}
+              icon="document-text-outline"
+              placeholder="Registration / license number"
+              value={formData.licenseNumber}
+              onChangeText={set("licenseNumber")}
+            />
+          </Card>
+
+          <Card padding="lg">
+            <Text style={styles.sectionTitle}>Contact & Location</Text>
+
+            <Input
+              label="Phone *"
+              icon="call-outline"
+              placeholder="+91 00000 00000"
+              value={formData.phone}
+              onChangeText={set("phone")}
+              keyboardType="phone-pad"
+              error={errors.phone}
+            />
+            <Input
+              label="Street Address *"
+              icon="location-outline"
+              placeholder="Building, street, area"
+              value={formData.address}
+              onChangeText={set("address")}
+              error={errors.address}
+            />
+            <Input
+              label="City *"
+              icon="navigate-outline"
+              placeholder="City"
+              value={formData.city}
+              onChangeText={set("city")}
+              error={errors.city}
+            />
+            <View style={styles.row}>
+              <View style={styles.flex1}>
+                <Input
+                  label="State"
+                  icon="map-outline"
+                  placeholder="State"
+                  value={formData.state}
+                  onChangeText={set("state")}
+                />
+              </View>
+              <View style={styles.flex1}>
+                <Input
+                  label="Pincode"
+                  icon="pin-outline"
+                  placeholder="000000"
+                  value={formData.pincode}
+                  onChangeText={set("pincode")}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          </Card>
+
+          <Button
+            title="Save & Continue"
+            onPress={handleSubmit}
+            loading={isLoading}
+            disabled={isLoading}
+            size="lg"
+            icon="checkmark-circle-outline"
+          />
+
+          <View style={styles.spacer} />
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
   stickyHeader: {
     backgroundColor: colors.primary,

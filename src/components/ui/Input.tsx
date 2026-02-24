@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -35,6 +35,7 @@ export function Input({
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isSecure, setIsSecure] = useState(secureTextEntry ?? false);
+  const inputRef = useRef<TextInput>(null);
 
   return (
     <View style={styles.container}>
@@ -48,12 +49,17 @@ export function Input({
           )}
         </View>
       )}
+      {/* pointerEvents="box-none" lets touches pass through the View shell
+          directly to the TextInput child, preventing the wrapper from
+          absorbing the tap before the keyboard can open on Android */}
       <View
+        pointerEvents="box-none"
         style={[
           styles.inputWrapper,
           isFocused && styles.inputWrapperFocused,
           error ? styles.inputWrapperError : null,
         ]}
+        onTouchStart={() => inputRef.current?.focus()}
       >
         {icon && (
           <Ionicons
@@ -64,6 +70,7 @@ export function Input({
           />
         )}
         <TextInput
+          ref={inputRef}
           style={[styles.input, style]}
           placeholderTextColor={colors.textLight}
           onFocus={() => setIsFocused(true)}

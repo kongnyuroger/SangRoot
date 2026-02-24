@@ -2,6 +2,8 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -54,89 +56,100 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      {/* Header strip */}
-      <View
-        style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
-      >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sign In</Text>
-        <Text style={styles.headerSubtitle}>Welcome back to SangRoot</Text>
-      </View>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Card padding="lg" style={styles.formCard}>
-          <Input
-            label="Email Address"
-            icon="mail-outline"
-            placeholder="name@hospital.com"
-            value={email}
-            onChangeText={(v) => {
-              setEmail(v);
-              if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
-            }}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            error={errors.email}
-          />
-
-          <Input
-            label="Password"
-            icon="lock-closed-outline"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={(v) => {
-              setPassword(v);
-              if (errors.password)
-                setErrors((p) => ({ ...p, password: undefined }));
-            }}
-            secureTextEntry
-            secureToggle
-            error={errors.password}
-            rightAction={{
-              text: "Forgot?",
-              onPress: () => Alert.alert("Info", "Password reset coming soon"),
-            }}
-          />
-
-          <Button
-            title="Sign In"
-            onPress={handleLogin}
-            loading={mutation.isLoading}
-            disabled={mutation.isLoading}
-            size="lg"
-            style={styles.submitBtn}
-          />
-        </Card>
-
-        {/* Register section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DON'T HAVE AN ACCOUNT?</Text>
-          <Button
-            title="Register Organisation"
-            variant="outline"
-            icon="business-outline"
-            onPress={() => router.push("/(auth)/register")}
-          />
-          <Button
-            title="Accept Doctor Invite"
-            variant="ghost"
-            icon="mail-open-outline"
-            onPress={() => router.push("/(auth)/accept-invite")}
-          />
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+        {/* Header strip */}
+        <View
+          style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Sign In</Text>
+          <Text style={styles.headerSubtitle}>Welcome back to SangRoot</Text>
         </View>
-      </ScrollView>
-    </View>
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Card padding="lg" style={styles.formCard}>
+            <Input
+              label="Email Address"
+              icon="mail-outline"
+              placeholder="name@hospital.com"
+              value={email}
+              onChangeText={(v) => {
+                setEmail(v);
+                if (errors.email)
+                  setErrors((p) => ({ ...p, email: undefined }));
+              }}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              error={errors.email}
+            />
+
+            <Input
+              label="Password"
+              icon="lock-closed-outline"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={(v) => {
+                setPassword(v);
+                if (errors.password)
+                  setErrors((p) => ({ ...p, password: undefined }));
+              }}
+              secureTextEntry
+              secureToggle
+              error={errors.password}
+              rightAction={{
+                text: "Forgot?",
+                onPress: () =>
+                  Alert.alert("Info", "Password reset coming soon"),
+              }}
+            />
+
+            <Button
+              title="Sign In"
+              onPress={handleLogin}
+              loading={mutation.isLoading}
+              disabled={mutation.isLoading}
+              size="lg"
+              style={styles.submitBtn}
+            />
+          </Card>
+
+          {/* Register section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>DON'T HAVE AN ACCOUNT?</Text>
+            <Button
+              title="Register Organisation"
+              variant="outline"
+              icon="business-outline"
+              onPress={() => router.push("/(auth)/register")}
+            />
+            <Button
+              title="Accept Doctor Invite"
+              variant="ghost"
+              icon="mail-open-outline"
+              onPress={() => router.push("/(auth)/accept-invite")}
+            />
+          </View>
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
   headerStrip: {
     backgroundColor: colors.primary,

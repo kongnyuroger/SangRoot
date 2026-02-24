@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import type React from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -36,6 +36,7 @@ export const StyledInput: React.FC<StyledInputProps> = ({
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPassword = secureTextEntry === true;
+  const inputRef = useRef<TextInput>(null);
 
   return (
     <View style={styles.container}>
@@ -53,6 +54,8 @@ export const StyledInput: React.FC<StyledInputProps> = ({
 
       {/* Input Container */}
       <View
+        pointerEvents="box-none"
+        onTouchStart={() => inputRef.current?.focus()}
         style={[styles.inputContainer, error && styles.inputContainerError]}
       >
         {/* Icon */}
@@ -64,6 +67,7 @@ export const StyledInput: React.FC<StyledInputProps> = ({
 
         {/* Text Input */}
         <TextInput
+          ref={inputRef}
           style={[styles.input, icon && styles.inputWithIcon]}
           placeholderTextColor={colors.textLight}
           secureTextEntry={isPassword && !isPasswordVisible}
@@ -122,7 +126,7 @@ const styles = StyleSheet.create({
     height: 52,
   },
   inputContainerError: {
-    borderColor: colors.error,
+    borderColor: colors.alertRed,
   },
   iconContainer: {
     marginRight: spacing.sm,
@@ -142,7 +146,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: typography.fontSize.xs,
-    color: colors.error,
+    color: colors.alertRed,
     marginTop: spacing.xs,
   },
 });

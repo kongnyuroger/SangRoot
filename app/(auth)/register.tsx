@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -78,112 +80,125 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      <View
-        style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
-      >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Register</Text>
-        <Text style={styles.headerSubtitle}>
-          Create your organisation account
-        </Text>
-      </View>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Card padding="lg" style={styles.formCard}>
-          {/* Role selector */}
-          <Text style={styles.roleLabel}>Organisation Type</Text>
-          <View style={styles.roleRow}>
-            {roleOptions.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.roleChip,
-                  role === opt.value && styles.roleChipActive,
-                ]}
-                onPress={() => setRole(opt.value)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.roleEmoji}>{opt.icon}</Text>
-                <View>
-                  <Text
-                    style={[
-                      styles.roleChipLabel,
-                      role === opt.value && styles.roleChipLabelActive,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                  <Text style={styles.roleChipDesc}>{opt.desc}</Text>
-                </View>
-                {role === opt.value && (
-                  <View style={styles.checkmark}>
-                    <Ionicons name="checkmark" size={14} color={colors.white} />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Input
-            label="Email Address"
-            icon="mail-outline"
-            placeholder="admin@hospital.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            error={errors.email}
-          />
-          <Input
-            label="Password"
-            icon="lock-closed-outline"
-            placeholder="Min. 8 characters"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            secureToggle
-            error={errors.password}
-          />
-          <Input
-            label="Confirm Password"
-            icon="shield-checkmark-outline"
-            placeholder="Re-enter password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            secureToggle
-            error={errors.confirmPassword}
-          />
-
-          <Button
-            title="Create Account"
-            onPress={handleRegister}
-            loading={mutation.isLoading}
-            disabled={mutation.isLoading}
-            size="lg"
-            style={styles.submitBtn}
-          />
-        </Card>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-            <Text style={styles.footerLink}>Sign In</Text>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+        <View
+          style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Register</Text>
+          <Text style={styles.headerSubtitle}>
+            Create your organisation account
+          </Text>
         </View>
-      </ScrollView>
-    </View>
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Card padding="lg" style={styles.formCard}>
+            {/* Role selector */}
+            <Text style={styles.roleLabel}>Organisation Type</Text>
+            <View style={styles.roleRow}>
+              {roleOptions.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.roleChip,
+                    role === opt.value && styles.roleChipActive,
+                  ]}
+                  onPress={() => setRole(opt.value)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.roleEmoji}>{opt.icon}</Text>
+                  <View>
+                    <Text
+                      style={[
+                        styles.roleChipLabel,
+                        role === opt.value && styles.roleChipLabelActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={styles.roleChipDesc}>{opt.desc}</Text>
+                  </View>
+                  {role === opt.value && (
+                    <View style={styles.checkmark}>
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={colors.white}
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Input
+              label="Email Address"
+              icon="mail-outline"
+              placeholder="admin@hospital.com"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              error={errors.email}
+            />
+            <Input
+              label="Password"
+              icon="lock-closed-outline"
+              placeholder="Min. 8 characters"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              secureToggle
+              error={errors.password}
+            />
+            <Input
+              label="Confirm Password"
+              icon="shield-checkmark-outline"
+              placeholder="Re-enter password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              secureToggle
+              error={errors.confirmPassword}
+            />
+
+            <Button
+              title="Create Account"
+              onPress={handleRegister}
+              loading={mutation.isLoading}
+              disabled={mutation.isLoading}
+              size="lg"
+              style={styles.submitBtn}
+            />
+          </Card>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+              <Text style={styles.footerLink}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
   headerStrip: {
     backgroundColor: colors.primary,
