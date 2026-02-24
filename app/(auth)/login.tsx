@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -8,157 +8,128 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { AuthCard } from "../../src/components/auth/AuthCard";
-import { AuthHeader } from "../../src/components/auth/AuthHeader";
-import { StyledButton } from "../../src/components/auth/StyledButton";
-import { StyledInput } from "../../src/components/auth/StyledInput";
-import { colors, spacing, typography } from "../../src/constants/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Card, Input } from "../../src/components/ui";
+import {
+  borderRadius,
+  colors,
+  spacing,
+  typography,
+} from "../../src/constants/theme";
+import { useAuth } from "../../src/context";
 import { useLogin } from "../../src/hooks/useAuthHooks";
-import { getAccessToken } from "../../src/lib/authStorage";
-import { getTokenRole } from "../../src/lib/tokenUtils";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const insets = useSafeAreaInsets();
+  const { refreshUser } = useAuth();
   const mutation = useLogin();
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Required Fields", "Please enter both email and password");
-      return;
-    }
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
 
+  const validate = () => {
+    const e: typeof errors = {};
+    if (!email.trim()) e.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Enter a valid email";
+    if (!password.trim()) e.password = "Password is required";
+    else if (password.length < 6) e.password = "Minimum 6 characters";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleLogin = async () => {
+    if (!validate()) return;
     try {
       await mutation.mutateAsync({ email, password });
-
-      // Get user role from token and navigate accordingly
-      const token = await getAccessToken();
-      const role = token ? getTokenRole(token) : null;
-
-      if (role === "DOCTOR") {
-        router.replace("/(doctor)/request");
-      } else if (role === "HOSPITAL") {
-        router.replace("/(hospital-admin)/register-donor");
-      } else if (role === "BLOOD_BANK") {
-        router.replace("/(blood-bank-admin)/register-donor");
-      } else {
-        // Fallback to home
-        router.replace("/");
-      }
+      await refreshUser();
+      // Navigation guard in _layout.tsx handles routing after refreshUser
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : "Unknown error";
-      Alert.alert("Login failed", errorMessage);
+      const msg = e instanceof Error ? e.message : "Login failed";
+      setErrors({ password: msg });
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      {/* Header strip */}
+      <View
+        style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
+      >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Sign In</Text>
+        <Text style={styles.headerSubtitle}>Welcome back to SangRoot</Text>
+      </View>
+
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <AuthHeader
-          icon="medical"
-          title="Healthcare Portal"
-          subtitle="Secure access for medical professionals"
-        />
-
-        <AuthCard>
-          <StyledInput
+        <Card padding="lg" style={styles.formCard}>
+          <Input
             label="Email Address"
             icon="mail-outline"
             placeholder="name@hospital.com"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(v) => {
+              setEmail(v);
+              if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+            }}
             autoCapitalize="none"
             keyboardType="email-address"
+            error={errors.email}
           />
 
-          <StyledInput
+          <Input
             label="Password"
             icon="lock-closed-outline"
             placeholder="••••••••"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(v) => {
+              setPassword(v);
+              if (errors.password)
+                setErrors((p) => ({ ...p, password: undefined }));
+            }}
             secureTextEntry
+            secureToggle
+            error={errors.password}
             rightAction={{
-              text: "Forgot Password?",
+              text: "Forgot?",
               onPress: () => Alert.alert("Info", "Password reset coming soon"),
             }}
           />
 
-          <StyledButton
-            title={mutation.isLoading ? "Signing in..." : "Sign In"}
+          <Button
+            title="Sign In"
             onPress={handleLogin}
             loading={mutation.isLoading}
             disabled={mutation.isLoading}
+            size="lg"
+            style={styles.submitBtn}
           />
-        </AuthCard>
+        </Card>
 
-        {/* Register New Entity Section */}
+        {/* Register section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>REGISTER NEW ENTITY</Text>
-
-          <TouchableOpacity
-            style={styles.optionCard}
+          <Text style={styles.sectionLabel}>DON'T HAVE AN ACCOUNT?</Text>
+          <Button
+            title="Register Organisation"
+            variant="outline"
+            icon="business-outline"
             onPress={() => router.push("/(auth)/register")}
-          >
-            <View style={styles.optionIcon}>
-              <Text style={styles.optionIconText}>🏥</Text>
-            </View>
-            <View style={styles.optionContent}>
-              <Text style={styles.optionTitle}>Hospital</Text>
-              <Text style={styles.optionSubtitle}>
-                Register your medical facility
-              </Text>
-            </View>
-            <Text style={styles.optionArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.optionCard}
-            onPress={() => router.push("/(auth)/register")}
-          >
-            <View style={styles.optionIcon}>
-              <Text style={styles.optionIconText}>🩸</Text>
-            </View>
-            <View style={styles.optionContent}>
-              <Text style={styles.optionTitle}>Blood Bank</Text>
-              <Text style={styles.optionSubtitle}>
-                Manage donations and supply
-              </Text>
-            </View>
-            <Text style={styles.optionArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.optionCard}
+          />
+          <Button
+            title="Accept Doctor Invite"
+            variant="ghost"
+            icon="mail-open-outline"
             onPress={() => router.push("/(auth)/accept-invite")}
-          >
-            <View style={styles.optionIcon}>
-              <Text style={styles.optionIconText}>👨‍⚕️</Text>
-            </View>
-            <View style={styles.optionContent}>
-              <Text style={styles.optionTitle}>Doctor</Text>
-              <Text style={styles.optionSubtitle}>
-                Join as a verified professional
-              </Text>
-            </View>
-            <Text style={styles.optionArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Support Link */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Need help? </Text>
-          <TouchableOpacity
-            onPress={() =>
-              Alert.alert("Support", "Contact support coming soon")
-            }
-          >
-            <Text style={styles.footerLink}>Contact Support</Text>
-          </TouchableOpacity>
+          />
         </View>
       </ScrollView>
     </View>
@@ -166,81 +137,44 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
+  container: { flex: 1, backgroundColor: colors.background },
+  headerStrip: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing["2xl"],
+    paddingBottom: spacing["3xl"],
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: spacing.xl,
-    justifyContent: "center",
+  backBtn: { marginBottom: spacing.xl },
+  backText: {
+    fontSize: typography.fontSize.sm,
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: typography.fontWeight.medium,
   },
-  section: {
-    marginTop: spacing["2xl"],
+  headerTitle: {
+    fontSize: typography.fontSize["4xl"],
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: spacing.sm,
   },
-  sectionTitle: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-    marginBottom: spacing.md,
-    textAlign: "center",
-  },
-  optionCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  optionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: colors.primaryLight,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: spacing.md,
-  },
-  optionIconText: {
-    fontSize: 24,
-  },
-  optionContent: {
-    flex: 1,
-  },
-  optionTitle: {
+  headerSubtitle: {
     fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.textPrimary,
-    marginBottom: 2,
+    color: "rgba(255,255,255,0.75)",
   },
-  optionSubtitle: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
+  scroll: { flex: 1 },
+  scrollContent: {
+    padding: spacing["2xl"],
+    paddingTop: spacing["3xl"],
+    gap: spacing["2xl"],
   },
-  optionArrow: {
-    fontSize: 24,
+  formCard: { marginTop: -spacing["4xl"] },
+  submitBtn: { marginTop: spacing.md },
+  section: { gap: spacing.md },
+  sectionLabel: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.bold,
     color: colors.textLight,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: spacing["2xl"],
-  },
-  footerText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
-  },
-  footerLink: {
-    fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.primary,
+    letterSpacing: 1,
+    textAlign: "center",
   },
 });

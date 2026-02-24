@@ -1,187 +1,195 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
-import { AuthCard } from "../../src/components/auth/AuthCard";
-import { AuthHeader } from "../../src/components/auth/AuthHeader";
-import { StyledButton } from "../../src/components/auth/StyledButton";
-import { StyledInput } from "../../src/components/auth/StyledInput";
-import { colors, spacing } from "../../src/constants/theme";
-import * as authService from "../../src/services/auth.service";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Card, Input } from "../../src/components/ui";
+import { colors, spacing, typography } from "../../src/constants/theme";
+import { useAuth } from "../../src/context";
+import { acceptInvite } from "../../src/services/auth.service";
 
 export default function AcceptInviteScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams();
-  const inviteId = (params.inviteId as string) || "";
+  const insets = useSafeAreaInsets();
+  const { refreshUser } = useAuth();
 
-  const [formData, setFormData] = React.useState({
-    inviteId: inviteId,
-    name: "",
-    email: "",
-    password: "",
-    phone: "",
-    registrationNo: "",
-    specialization: "",
-  });
+  const [inviteCode, setInviteCode] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!inviteCode.trim()) e.inviteCode = "Invite code is required";
+    if (!email.trim()) e.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Enter a valid email";
+    if (!password) e.password = "Password is required";
+    else if (password.length < 8) e.password = "Minimum 8 characters";
+    if (confirmPassword !== password)
+      e.confirmPassword = "Passwords do not match";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleAcceptInvite = async () => {
-    // Validate required fields
-    const requiredFields = [
-      "name",
-      "email",
-      "password",
-      "phone",
-      "registrationNo",
-      "specialization",
-    ];
-    const emptyFields = requiredFields.filter(
-      (field) => !formData[field as keyof typeof formData],
-    );
-
-    if (emptyFields.length > 0) {
-      Alert.alert(
-        "Required Fields",
-        `Please fill in: ${emptyFields.join(", ")}`,
-      );
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      Alert.alert("Password Error", "Password must be at least 8 characters");
-      return;
-    }
-
+    if (!validate()) return;
     setIsLoading(true);
     try {
-      await authService.acceptInvite({
-        inviteId: formData.inviteId,
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        registrationNo: formData.registrationNo,
-        specialization: formData.specialization,
-      });
-
-      Alert.alert("Success", "Account created successfully! Logging you in...");
-      // Navigate to doctor dashboard
-      router.replace("/(doctor)/request");
+      await acceptInvite({ inviteCode, email, password });
+      await refreshUser();
     } catch (e: unknown) {
-      const errorMessage =
-        e instanceof Error ? e.message : "Failed to accept invite";
-      Alert.alert("Error", errorMessage);
+      const msg =
+        e instanceof Error ? e.message : "Invalid invite code or credentials";
+      setErrors({ inviteCode: msg });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View
+        style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
+      >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Accept Invite</Text>
+        <Text style={styles.headerSubtitle}>
+          Join your hospital as a verified doctor
+        </Text>
+      </View>
+
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <AuthHeader
-          icon="medical-outline"
-          title="Accept Invite"
-          subtitle="Complete your doctor registration"
-        />
+        <Card padding="lg" style={styles.formCard}>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoText}>
+              💡 Your invite code was generated by your hospital administrator.
+              Check your email or contact them directly.
+            </Text>
+          </View>
 
-        <AuthCard>
-          <StyledInput
-            label="Full Name *"
-            icon="person-outline"
-            placeholder="Enter your full name"
-            value={formData.name}
-            onChangeText={(value) => handleInputChange("name", value)}
+          <Input
+            label="Invite Code"
+            icon="key-outline"
+            placeholder="e.g. HOSP-XXXX-XXXX"
+            value={inviteCode}
+            onChangeText={setInviteCode}
+            autoCapitalize="characters"
+            error={errors.inviteCode}
           />
-
-          <StyledInput
-            label="Email *"
+          <Input
+            label="Your Email"
             icon="mail-outline"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChangeText={(value) => handleInputChange("email", value)}
+            placeholder="doctor@hospital.com"
+            value={email}
+            onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            error={errors.email}
           />
-
-          <StyledInput
-            label="Password *"
+          <Input
+            label="Password"
             icon="lock-closed-outline"
-            placeholder="Create a password (min 8 characters)"
-            value={formData.password}
-            onChangeText={(value) => handleInputChange("password", value)}
+            placeholder="Min. 8 characters"
+            value={password}
+            onChangeText={setPassword}
             secureTextEntry
+            secureToggle
+            error={errors.password}
+          />
+          <Input
+            label="Confirm Password"
+            icon="shield-checkmark-outline"
+            placeholder="Re-enter password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            secureToggle
+            error={errors.confirmPassword}
           />
 
-          <StyledInput
-            label="Phone Number *"
-            icon="call-outline"
-            placeholder="Enter your phone number"
-            value={formData.phone}
-            onChangeText={(value) => handleInputChange("phone", value)}
-            keyboardType="phone-pad"
-          />
-
-          <StyledInput
-            label="Medical Registration Number *"
-            icon="card-outline"
-            placeholder="Enter your registration number"
-            value={formData.registrationNo}
-            onChangeText={(value) => handleInputChange("registrationNo", value)}
-          />
-
-          <StyledInput
-            label="Specialization *"
-            icon="fitness-outline"
-            placeholder="Enter your medical specialization"
-            value={formData.specialization}
-            onChangeText={(value) => handleInputChange("specialization", value)}
-          />
-
-          <StyledButton
-            title={
-              isLoading ? "Creating Account..." : "Accept Invite & Register"
-            }
+          <Button
+            title="Activate Account"
             onPress={handleAcceptInvite}
             loading={isLoading}
             disabled={isLoading}
+            size="lg"
+            style={styles.submitBtn}
           />
+        </Card>
 
-          <View style={styles.divider} />
-
-          <StyledButton
-            title="Back to Login"
-            onPress={() => router.back()}
-            variant="outline"
-          />
-        </AuthCard>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already registered? </Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+            <Text style={styles.footerLink}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
+  container: { flex: 1, backgroundColor: colors.background },
+  headerStrip: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing["2xl"],
+    paddingBottom: spacing["3xl"],
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
+  backBtn: { marginBottom: spacing.xl },
+  backText: {
+    fontSize: typography.fontSize.sm,
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: typography.fontWeight.medium,
+  },
+  headerTitle: {
+    fontSize: typography.fontSize["4xl"],
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: spacing.sm,
+  },
+  headerSubtitle: {
+    fontSize: typography.fontSize.base,
+    color: "rgba(255,255,255,0.75)",
+  },
+  scroll: { flex: 1 },
   scrollContent: {
-    flexGrow: 1,
-    padding: spacing.xl,
-    paddingTop: spacing["2xl"],
-    paddingBottom: spacing["2xl"],
+    padding: spacing["2xl"],
+    paddingTop: spacing["3xl"],
+    gap: spacing["2xl"],
   },
-  divider: {
-    height: spacing.md,
+  formCard: { marginTop: -spacing["4xl"] },
+  infoBox: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  infoText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.primaryDark,
+    lineHeight: 20,
+  },
+  submitBtn: { marginTop: spacing.md },
+  footer: { flexDirection: "row", justifyContent: "center" },
+  footerText: { fontSize: typography.fontSize.sm, color: colors.textSecondary },
+  footerLink: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.primary,
   },
 });

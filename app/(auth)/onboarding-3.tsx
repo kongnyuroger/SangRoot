@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
-import { StyledButton } from "../../src/components/auth/StyledButton";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   borderRadius,
   colors,
@@ -12,47 +12,94 @@ import { setOnboardingCompleted } from "../../src/lib/authStorage";
 
 export default function Onboarding3Screen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  const handleGetStarted = async () => {
-    // Mark onboarding as completed
+  const handleGetStarted = async (
+    path: "/(auth)/login" | "/(auth)/register" | "/(auth)/accept-invite",
+  ) => {
     await setOnboardingCompleted();
-    // Navigate to login
-    router.replace("/(auth)/login");
+    router.replace(path);
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       <View style={styles.content}>
         {/* Icon */}
-        <View style={styles.iconContainer}>
-          <Ionicons name="heart" size={64} color={colors.primary} />
+        <View style={styles.iconWrap}>
+          <Ionicons name="heart" size={48} color={colors.primary} />
         </View>
 
-        {/* Title and Description */}
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>Ready to Get Started?</Text>
-          <Text style={styles.description}>
-            Join doctors, hospitals, and blood banks in saving lives through
-            efficient blood donation management.
-          </Text>
-        </View>
+        <Text style={styles.title}>Join the{"\n"}Emergency Network</Text>
+        <Text style={styles.subtitle}>
+          Choose how you want to be part of SangRoot's life-saving platform.
+        </Text>
 
-        {/* Buttons */}
-        <View style={styles.buttonContainer}>
-          <StyledButton title="Get Started" onPress={handleGetStarted} />
-          <View style={styles.buttonSpacer} />
-          <StyledButton
-            title="Back"
-            onPress={() => router.back()}
-            variant="outline"
-          />
-        </View>
+        {/* CTA cards */}
+        <View style={styles.cards}>
+          <TouchableOpacity
+            style={[styles.card, styles.cardPrimary]}
+            activeOpacity={0.85}
+            onPress={() => handleGetStarted("/(auth)/login")}
+          >
+            <Ionicons name="log-in-outline" size={22} color={colors.white} />
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitleWhite}>Sign In</Text>
+              <Text style={styles.cardDescWhite}>Already have an account</Text>
+            </View>
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color="rgba(255,255,255,0.7)"
+            />
+          </TouchableOpacity>
 
-        {/* Progress Indicator */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressDot} />
-          <View style={styles.progressDot} />
-          <View style={[styles.progressDot, styles.progressDotActive]} />
+          <TouchableOpacity
+            style={[styles.card, styles.cardOutline]}
+            activeOpacity={0.85}
+            onPress={() => handleGetStarted("/(auth)/register")}
+          >
+            <Ionicons
+              name="business-outline"
+              size={22}
+              color={colors.primary}
+            />
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>Register Organisation</Text>
+              <Text style={styles.cardDesc}>Hospital or Blood Bank</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={20} color={colors.border} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.card, styles.cardOutline]}
+            activeOpacity={0.85}
+            onPress={() => handleGetStarted("/(auth)/accept-invite")}
+          >
+            <Ionicons
+              name="mail-open-outline"
+              size={22}
+              color={colors.primary}
+            />
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>Accept Doctor Invite</Text>
+              <Text style={styles.cardDesc}>Enter your invite code</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={20} color={colors.border} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Progress dots */}
+      <View style={styles.footer}>
+        <View style={styles.dots}>
+          <View style={styles.dot} />
+          <View style={styles.dot} />
+          <View style={[styles.dot, styles.dotActive]} />
         </View>
       </View>
     </View>
@@ -60,63 +107,79 @@ export default function Onboarding3Screen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.xl,
-    justifyContent: "center",
+    paddingHorizontal: spacing["2xl"],
+    paddingTop: spacing["5xl"],
     alignItems: "center",
   },
-  iconContainer: {
-    width: 120,
-    height: 120,
+  iconWrap: {
+    width: 96,
+    height: 96,
     borderRadius: borderRadius.xl,
     backgroundColor: colors.primaryLight,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing["3xl"],
   },
-  textContainer: {
-    marginBottom: spacing["4xl"],
-    alignItems: "center",
-  },
   title: {
-    fontSize: typography.fontSize["4xl"],
+    fontSize: typography.fontSize["3xl"],
     fontWeight: typography.fontWeight.bold,
-    textAlign: "center",
     color: colors.textPrimary,
+    textAlign: "center",
+    lineHeight: 38,
     marginBottom: spacing.lg,
   },
-  description: {
+  subtitle: {
     fontSize: typography.fontSize.base,
-    textAlign: "center",
     color: colors.textSecondary,
+    textAlign: "center",
     lineHeight: 24,
-    paddingHorizontal: spacing.md,
+    marginBottom: spacing["4xl"],
   },
-  buttonContainer: {
+  cards: {
     width: "100%",
-    marginTop: spacing.xl,
+    gap: spacing.md,
   },
-  buttonSpacer: {
-    height: spacing.md,
-  },
-  progressContainer: {
+  card: {
     flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing["2xl"],
+    alignItems: "center",
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-  },
-  progressDotActive: {
+  cardPrimary: {
     backgroundColor: colors.primary,
-    width: 24,
   },
+  cardOutline: {
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  cardText: { flex: 1 },
+  cardTitleWhite: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: 2,
+  },
+  cardDescWhite: {
+    fontSize: typography.fontSize.sm,
+    color: "rgba(255,255,255,0.75)",
+  },
+  cardTitle: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  cardDesc: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textSecondary,
+  },
+  footer: { paddingBottom: spacing["3xl"] },
+  dots: { flexDirection: "row", justifyContent: "center", gap: spacing.sm },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+  dotActive: { width: 24, backgroundColor: colors.primary },
 });

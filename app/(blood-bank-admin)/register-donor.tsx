@@ -1,179 +1,263 @@
 import React, { useState } from "react";
-import { Alert, Button, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Card, Input } from "../../src/components/ui";
+import {
+  borderRadius,
+  colors,
+  spacing,
+  typography,
+} from "../../src/constants/theme";
 import { registerDonor } from "../../src/services/blood-bank.service";
 
-export default function BloodBankAdminRegisterDonorScreen() {
-  const [formData, setFormData] = useState({
-    name: "",
-    bloodGroup: "",
-    phone: "",
-    email: "",
-    age: "",
-    gender: "",
-  });
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+
+interface DonorForm {
+  name: string;
+  phone: string;
+  email: string;
+  bloodGroup: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+const INITIAL: DonorForm = {
+  name: "",
+  phone: "",
+  email: "",
+  bloodGroup: "",
+  address: "",
+  city: "",
+  state: "",
+  pincode: "",
+};
+
+export default function BloodBankRegisterDonorScreen() {
+  const insets = useSafeAreaInsets();
+  const [form, setForm] = useState<DonorForm>(INITIAL);
+  const [errors, setErrors] = useState<Partial<DonorForm>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const set = (field: keyof DonorForm) => (val: string) => {
+    setForm((p) => ({ ...p, [field]: val }));
+    if (errors[field]) setErrors((p) => ({ ...p, [field]: undefined }));
   };
 
-  const handleRegister = async () => {
-    // Basic validation
-    if (
-      !formData.name ||
-      !formData.bloodGroup ||
-      !formData.phone ||
-      !formData.age ||
-      !formData.gender
-    ) {
-      Alert.alert("Required", "Please fill in all required fields");
-      return;
-    }
+  const validate = () => {
+    const e: Partial<DonorForm> = {};
+    if (!form.name.trim()) e.name = "Name is required";
+    if (!form.phone.trim()) e.phone = "Phone is required";
+    if (!form.bloodGroup) e.bloodGroup = "Select a blood group";
+    if (!form.city.trim()) e.city = "City is required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
+  const handleSubmit = async () => {
+    if (!validate()) return;
     setIsLoading(true);
     try {
       await registerDonor({
-        ...formData,
-        age: parseInt(formData.age, 10),
+        ...form,
+        latitude: 0,
+        longitude: 0,
+        isAvailable: true,
       });
-      Alert.alert("Success", "Donor registered successfully!");
-      setFormData({
-        name: "",
-        bloodGroup: "",
-        phone: "",
-        email: "",
-        age: "",
-        gender: "",
-      });
+      Alert.alert("✅ Success", "Donor registered successfully!");
+      setForm(INITIAL);
     } catch (e: unknown) {
-      const message =
-        e instanceof Error ? e.message : "Failed to register donor";
-      Alert.alert("Error", message);
+      Alert.alert(
+        "Error",
+        e instanceof Error ? e.message : "Failed to register donor",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20 }}>
-      <Text
-        style={{
-          fontSize: 24,
-          fontWeight: "bold",
-          marginBottom: 20,
-          textAlign: "center",
-        }}
-      >
-        Register Donor (Blood Bank)
-      </Text>
-
-      {/* Name */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ marginBottom: 4, color: "#666" }}>Full Name *</Text>
-        <TextInput
-          placeholder="Donor Name"
-          value={formData.name}
-          onChangeText={(v) => handleChange("name", v)}
-          style={{
-            borderWidth: 1,
-            borderColor: "#ddd",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        />
-      </View>
-
-      {/* Blood Group */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ marginBottom: 4, color: "#666" }}>
-          Blood Group * (e.g., A+, O-)
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.pageHeader}>
+        <Text style={styles.pageTitle}>Register Donor</Text>
+        <Text style={styles.pageSubtitle}>
+          Add a donor to the blood bank network
         </Text>
-        <TextInput
-          placeholder="Blood Group"
-          value={formData.bloodGroup}
-          onChangeText={(v) => handleChange("bloodGroup", v)}
-          style={{
-            borderWidth: 1,
-            borderColor: "#ddd",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        />
       </View>
-
-      {/* Phone */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ marginBottom: 4, color: "#666" }}>Phone *</Text>
-        <TextInput
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChangeText={(v) => handleChange("phone", v)}
-          keyboardType="phone-pad"
-          style={{
-            borderWidth: 1,
-            borderColor: "#ddd",
-            padding: 10,
-            borderRadius: 8,
-          }}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Card padding="lg">
+          <Text style={styles.sectionLabel}>Personal Details</Text>
+          <Input
+            label="Full Name *"
+            icon="person-outline"
+            placeholder="Donor's full name"
+            value={form.name}
+            onChangeText={set("name")}
+            error={errors.name}
+          />
+          <Input
+            label="Phone *"
+            icon="call-outline"
+            placeholder="+91 00000 00000"
+            value={form.phone}
+            onChangeText={set("phone")}
+            keyboardType="phone-pad"
+            error={errors.phone}
+          />
+          <Input
+            label="Email (Optional)"
+            icon="mail-outline"
+            placeholder="donor@email.com"
+            value={form.email}
+            onChangeText={set("email")}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+        </Card>
+        <Card padding="lg">
+          <Text style={styles.sectionLabel}>Blood Group *</Text>
+          {errors.bloodGroup && (
+            <Text style={styles.errorText}>{errors.bloodGroup}</Text>
+          )}
+          <View style={styles.bgGrid}>
+            {BLOOD_GROUPS.map((bg) => (
+              <TouchableOpacity
+                key={bg}
+                style={[
+                  styles.bgChip,
+                  form.bloodGroup === bg && styles.bgChipActive,
+                ]}
+                onPress={() => set("bloodGroup")(bg)}
+              >
+                <Text
+                  style={[
+                    styles.bgText,
+                    form.bloodGroup === bg && styles.bgTextActive,
+                  ]}
+                >
+                  {bg}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Card>
+        <Card padding="lg">
+          <Text style={styles.sectionLabel}>Location</Text>
+          <Input
+            label="Address"
+            icon="location-outline"
+            placeholder="Street address"
+            value={form.address}
+            onChangeText={set("address")}
+          />
+          <Input
+            label="City *"
+            icon="navigate-outline"
+            placeholder="City"
+            value={form.city}
+            onChangeText={set("city")}
+            error={errors.city}
+          />
+          <View style={styles.row}>
+            <View style={styles.flex1}>
+              <Input
+                label="State"
+                icon="map-outline"
+                placeholder="State"
+                value={form.state}
+                onChangeText={set("state")}
+              />
+            </View>
+            <View style={styles.flex1}>
+              <Input
+                label="Pincode"
+                icon="pin-outline"
+                placeholder="000000"
+                value={form.pincode}
+                onChangeText={set("pincode")}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+        </Card>
+        <Button
+          title="Register Donor"
+          icon="person-add-outline"
+          onPress={handleSubmit}
+          loading={isLoading}
+          disabled={isLoading}
+          size="lg"
         />
-      </View>
-
-      {/* Email */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ marginBottom: 4, color: "#666" }}>Email (Optional)</Text>
-        <TextInput
-          placeholder="Email Address"
-          value={formData.email}
-          onChangeText={(v) => handleChange("email", v)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={{
-            borderWidth: 1,
-            borderColor: "#ddd",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        />
-      </View>
-
-      {/* Age */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ marginBottom: 4, color: "#666" }}>Age *</Text>
-        <TextInput
-          placeholder="Age"
-          value={formData.age}
-          onChangeText={(v) => handleChange("age", v)}
-          keyboardType="numeric"
-          style={{
-            borderWidth: 1,
-            borderColor: "#ddd",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        />
-      </View>
-
-      {/* Gender */}
-      <View style={{ marginBottom: 20 }}>
-        <Text style={{ marginBottom: 4, color: "#666" }}>Gender *</Text>
-        <TextInput
-          placeholder="Gender"
-          value={formData.gender}
-          onChangeText={(v) => handleChange("gender", v)}
-          style={{
-            borderWidth: 1,
-            borderColor: "#ddd",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        />
-      </View>
-
-      <Button
-        title={isLoading ? "Registering..." : "Register Donor"}
-        onPress={handleRegister}
-        disabled={isLoading}
-      />
-    </ScrollView>
+        <View style={{ height: spacing["2xl"] }} />
+      </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  pageHeader: {
+    backgroundColor: colors.white,
+    paddingHorizontal: spacing["2xl"],
+    paddingVertical: spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pageTitle: {
+    fontSize: typography.fontSize["2xl"],
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textPrimary,
+  },
+  pageSubtitle: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  scrollContent: { padding: spacing["2xl"], gap: spacing.lg },
+  sectionLabel: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: spacing.lg,
+  },
+  bgGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  bgChip: {
+    width: 56,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  bgChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  bgText: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textSecondary,
+  },
+  bgTextActive: { color: colors.white },
+  row: { flexDirection: "row", gap: spacing.md },
+  flex1: { flex: 1 },
+  errorText: {
+    fontSize: typography.fontSize.xs,
+    color: colors.alertRed,
+    marginBottom: spacing.sm,
+  },
+});

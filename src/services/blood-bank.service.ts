@@ -2,12 +2,16 @@ import { api } from "../lib/api";
 
 type RegisterDonorDto = {
   name: string;
-  bloodGroup: string;
-  phone: string;
   email?: string;
-  age: number;
-  lastDonationDate?: string;
-  gender: string;
+  phone: string;
+  bloodGroup: string;
+  address?: string;
+  city: string;
+  state?: string;
+  pincode?: string;
+  latitude: number;
+  longitude: number;
+  isAvailable?: boolean;
 };
 
 export async function registerDonor(data: RegisterDonorDto) {
