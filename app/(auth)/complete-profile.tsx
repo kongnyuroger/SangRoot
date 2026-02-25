@@ -130,7 +130,13 @@ export default function CompleteProfileScreen() {
             registrationNo: formData.registrationNo,
           }
         : {
-            ...formData,
+            name: formData.name,
+            phone: formData.phone,
+            region: formData.region,
+            town: formData.town,
+            neighbourhood: formData.neighbourhood || undefined,
+            address: formData.address,
+            licenseNumber: formData.licenseNumber || undefined,
             latitude: Number(formData.latitude) || 0,
             longitude: Number(formData.longitude) || 0,
           };
