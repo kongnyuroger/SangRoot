@@ -30,7 +30,7 @@ export default function InviteDoctorsScreen() {
     setError("");
     setIsLoading(true);
     try {
-      const res = (await inviteDoctor({ email })) as any;
+      const res = (await inviteDoctor({ doctorEmail: email })) as any;
       setLastCode(res?.inviteCode ?? res?.code ?? null);
       Alert.alert(
         "Invite Sent",
