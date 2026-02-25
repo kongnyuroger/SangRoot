@@ -13,7 +13,7 @@ type RegisterDonorDto = {
 };
 
 type InviteDoctorDto = {
-  email: string;
+  doctorEmail: string;
   hospitalId?: string; // Optional if inferred from token
 };
 
