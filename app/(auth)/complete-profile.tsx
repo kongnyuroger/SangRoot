@@ -6,33 +6,56 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, Input } from "../../src/components/ui";
 import { colors, spacing, typography } from "../../src/constants/theme";
 import { useAuth } from "../../src/context";
-import { api } from "../../src/lib/api";
+import { api, safeRequest } from "../../src/lib/api";
 
 interface ProfileForm {
   name: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
   phone: string;
+  region: string;
+  town: string;
+  neighbourhood: string;
+  address: string;
+  latitude: number;
+  longitude: number;
   licenseNumber: string;
+  // Doctor specific fields
+  specialization: string;
+  registrationNo: string;
 }
 
 const INITIAL: ProfileForm = {
   name: "",
-  address: "",
-  city: "",
-  state: "",
-  pincode: "",
   phone: "",
+  region: "",
+  town: "",
+  neighbourhood: "",
+  address: "",
+  latitude: 0,
+  longitude: 0,
   licenseNumber: "",
+  specialization: "",
+  registrationNo: "",
 };
+
+const REGIONS = [
+  "ADAMAWA",
+  "CENTRE",
+  "EAST",
+  "FAR_NORTH",
+  "LITTORAL",
+  "NORTH",
+  "NORTH_WEST",
+  "WEST",
+  "SOUTH",
+  "SOUTH_WEST",
+];
 
 export default function CompleteProfileScreen() {
   const router = useRouter();
@@ -42,7 +65,12 @@ export default function CompleteProfileScreen() {
   const [errors, setErrors] = useState<Partial<ProfileForm>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const entityType = role === "HOSPITAL" ? "Hospital" : "Blood Bank";
+  const isDoctor = role === "DOCTOR";
+  const entityType = isDoctor
+    ? "Doctor"
+    : role === "HOSPITAL"
+      ? "Hospital"
+      : "Blood Bank";
 
   const set = (field: keyof ProfileForm) => (value: string) => {
     setFormData((p) => ({ ...p, [field]: value }));
@@ -51,30 +79,70 @@ export default function CompleteProfileScreen() {
 
   const validate = () => {
     const e: Partial<ProfileForm> = {};
-    if (!formData.name.trim()) e.name = `${entityType} name is required`;
-    if (!formData.address.trim()) e.address = "Address is required";
-    if (!formData.city.trim()) e.city = "City is required";
+    if (!formData.name.trim()) e.name = "Full name is required";
     if (!formData.phone.trim()) e.phone = "Phone is required";
     else if (!/^\+?[\d\s\-()]{7,}$/.test(formData.phone))
       e.phone = "Enter a valid phone number";
+
+    if (isDoctor) {
+      if (!formData.specialization.trim())
+        e.specialization = "Specialization is required";
+      if (!formData.registrationNo.trim())
+        e.registrationNo = "Registration number is required";
+    } else {
+      if (!formData.region) e.region = "Region is required";
+      if (!formData.town.trim()) e.town = "Town is required";
+      if (!formData.address.trim()) e.address = "Address is required";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
+  const getFieldsToVerify = () => {
+    if (isDoctor) {
+      return ["name", "phone", "specialization", "registrationNo"];
+    }
+    return ["name", "region", "town", "phone"];
+  };
+
   // Completion progress
-  const fields = Object.values(formData);
-  const filled = fields.filter(Boolean).length;
-  const progress = Math.round((filled / fields.length) * 100);
+  const fieldsToVerify = getFieldsToVerify();
+  const filled = fieldsToVerify.filter(
+    (f) => !!formData[f as keyof ProfileForm],
+  ).length;
+  const progress = Math.round((filled / fieldsToVerify.length) * 100);
 
   const handleSubmit = async () => {
     if (!validate()) return;
     setIsLoading(true);
     try {
-      const endpoint =
-        role === "HOSPITAL" ? "hospitals/profile" : "blood-banks/profile";
-      await api.patch(endpoint, { json: formData });
+      let endpoint = "hospitals/profile";
+      if (role === "BLOOD_BANK") endpoint = "blood-banks/profile";
+      if (role === "DOCTOR") endpoint = "doctors/profile";
+
+      // Prepare payload based on role
+      const payload = isDoctor
+        ? {
+            name: formData.name,
+            phone: formData.phone,
+            specialization: formData.specialization,
+            registrationNo: formData.registrationNo,
+          }
+        : {
+            name: formData.name,
+            phone: formData.phone,
+            region: formData.region,
+            town: formData.town,
+            neighbourhood: formData.neighbourhood || undefined,
+            address: formData.address,
+            licenseNumber: formData.licenseNumber || undefined,
+            latitude: Number(formData.latitude) || 0,
+            longitude: Number(formData.longitude) || 0,
+          };
+
+      await safeRequest(api.patch(endpoint, { json: payload }));
       await refreshUser();
-      // Navigation guard will redirect to dashboard after refreshUser
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to save profile";
       setErrors({ name: msg });
@@ -107,27 +175,59 @@ export default function CompleteProfileScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Card padding="lg">
-            <Text style={styles.sectionTitle}>{entityType} Information</Text>
+            <Text style={styles.sectionTitle}>
+              {isDoctor ? "Personal Info" : `${entityType} Information`}
+            </Text>
 
             <Input
-              label={`${entityType} Name *`}
-              icon="business-outline"
-              placeholder={`Enter ${entityType.toLowerCase()} name`}
+              label={isDoctor ? "Full Name *" : `${entityType} Name *`}
+              icon={isDoctor ? "person-outline" : "business-outline"}
+              placeholder={
+                isDoctor
+                  ? "Your full name"
+                  : `Enter ${entityType.toLowerCase()} name`
+              }
               value={formData.name}
               onChangeText={set("name")}
               error={errors.name}
             />
-            <Input
-              label={`License Number`}
-              icon="document-text-outline"
-              placeholder="Registration / license number"
-              value={formData.licenseNumber}
-              onChangeText={set("licenseNumber")}
-            />
+
+            {!isDoctor && (
+              <Input
+                label="License Number"
+                icon="document-text-outline"
+                placeholder="Registration / license number"
+                value={formData.licenseNumber}
+                onChangeText={set("licenseNumber")}
+              />
+            )}
+
+            {isDoctor && (
+              <>
+                <Input
+                  label="Specialization *"
+                  icon="medical-outline"
+                  placeholder="e.g. Cardiologist, Surgeon"
+                  value={formData.specialization}
+                  onChangeText={set("specialization")}
+                  error={errors.specialization}
+                />
+                <Input
+                  label="Registration Number *"
+                  icon="id-card-outline"
+                  placeholder="Medical registration number"
+                  value={formData.registrationNo}
+                  onChangeText={set("registrationNo")}
+                  error={errors.registrationNo}
+                />
+              </>
+            )}
           </Card>
 
           <Card padding="lg">
-            <Text style={styles.sectionTitle}>Contact & Location</Text>
+            <Text style={styles.sectionTitle}>
+              {isDoctor ? "Contact Details" : "Contact & Location"}
+            </Text>
 
             <Input
               label="Phone *"
@@ -138,43 +238,73 @@ export default function CompleteProfileScreen() {
               keyboardType="phone-pad"
               error={errors.phone}
             />
-            <Input
-              label="Street Address *"
-              icon="location-outline"
-              placeholder="Building, street, area"
-              value={formData.address}
-              onChangeText={set("address")}
-              error={errors.address}
-            />
-            <Input
-              label="City *"
-              icon="navigate-outline"
-              placeholder="City"
-              value={formData.city}
-              onChangeText={set("city")}
-              error={errors.city}
-            />
-            <View style={styles.row}>
-              <View style={styles.flex1}>
+
+            {!isDoctor && (
+              <>
+                <Text style={[styles.fieldLabel, { marginBottom: spacing.sm }]}>
+                  Region *
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.regionScroll}
+                >
+                  {REGIONS.map((r) => (
+                    <TouchableOpacity
+                      key={r}
+                      style={[
+                        styles.regionChip,
+                        formData.region === r && styles.regionChipActive,
+                      ]}
+                      onPress={() => set("region")(r)}
+                    >
+                      <Text
+                        style={[
+                          styles.regionChipText,
+                          formData.region === r && styles.regionChipTextActive,
+                        ]}
+                      >
+                        {r.replace("_", " ")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                {errors.region && (
+                  <Text style={styles.errorText}>{errors.region}</Text>
+                )}
+
+                <View style={styles.row}>
+                  <View style={styles.flex1}>
+                    <Input
+                      label="Town *"
+                      icon="navigate-outline"
+                      placeholder="e.g. Yaoundé"
+                      value={formData.town}
+                      onChangeText={set("town")}
+                      error={errors.town}
+                    />
+                  </View>
+                  <View style={styles.flex1}>
+                    <Input
+                      label="Neighbourhood"
+                      icon="pin-outline"
+                      placeholder="e.g. Bastos"
+                      value={formData.neighbourhood}
+                      onChangeText={set("neighbourhood")}
+                    />
+                  </View>
+                </View>
+
                 <Input
-                  label="State"
-                  icon="map-outline"
-                  placeholder="State"
-                  value={formData.state}
-                  onChangeText={set("state")}
+                  label="Street Address *"
+                  icon="location-outline"
+                  placeholder="Landmark or street info"
+                  value={formData.address}
+                  onChangeText={set("address")}
+                  error={errors.address}
                 />
-              </View>
-              <View style={styles.flex1}>
-                <Input
-                  label="Pincode"
-                  icon="pin-outline"
-                  placeholder="000000"
-                  value={formData.pincode}
-                  onChangeText={set("pincode")}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
+              </>
+            )}
           </Card>
 
           <Button
@@ -250,4 +380,38 @@ const styles = StyleSheet.create({
   },
   flex1: { flex: 1 },
   spacer: { height: spacing["2xl"] },
+  fieldLabel: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textSecondary,
+  },
+  regionScroll: {
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  regionChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  regionChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  regionChipText: {
+    fontSize: typography.fontSize.xs,
+    color: colors.textSecondary,
+    fontWeight: typography.fontWeight.medium,
+  },
+  regionChipTextActive: {
+    color: colors.white,
+  },
+  errorText: {
+    fontSize: typography.fontSize.xs,
+    color: colors.alertRed,
+    marginTop: spacing.xs,
+  },
 });

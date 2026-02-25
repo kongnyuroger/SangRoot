@@ -17,7 +17,9 @@ import {
   spacing,
   typography,
 } from "../../src/constants/theme";
+import { safeRequest } from "../../src/lib/api";
 import { registerDonor } from "../../src/services/hospital.service";
+import { mapBloodGroupToBackend } from "../../src/utils/bloodGroup";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -26,21 +28,37 @@ interface DonorForm {
   phone: string;
   email: string;
   bloodGroup: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
+  dateBirth: string;
+  genre: string;
+  region: string;
+  town: string;
+  neighbourhood: string;
 }
+
+const GENDERS = ["MALE", "FEMALE"];
+const REGIONS = [
+  "ADAMAWA",
+  "CENTRE",
+  "EAST",
+  "FAR_NORTH",
+  "LITTORAL",
+  "NORTH",
+  "NORTH_WEST",
+  "WEST",
+  "SOUTH",
+  "SOUTH_WEST",
+];
 
 const INITIAL: DonorForm = {
   name: "",
   phone: "",
   email: "",
   bloodGroup: "",
-  address: "",
-  city: "",
-  state: "",
-  pincode: "",
+  dateBirth: "",
+  genre: "",
+  region: "",
+  town: "",
+  neighbourhood: "",
 };
 
 export default function HospitalRegisterDonorScreen() {
@@ -60,8 +78,12 @@ export default function HospitalRegisterDonorScreen() {
     if (!form.name.trim()) e.name = "Name is required";
     if (!form.phone.trim()) e.phone = "Phone is required";
     if (!form.bloodGroup) e.bloodGroup = "Select a blood group";
-    if (!form.address.trim()) e.address = "Address is required";
-    if (!form.city.trim()) e.city = "City is required";
+    if (!form.dateBirth.trim()) e.dateBirth = "Date of birth is required";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.dateBirth))
+      e.dateBirth = "Use YYYY-MM-DD format";
+    if (!form.genre) e.genre = "Select gender";
+    if (!form.region) e.region = "Select region";
+    if (!form.town.trim()) e.town = "Town is required";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -70,12 +92,12 @@ export default function HospitalRegisterDonorScreen() {
     if (!validate()) return;
     setIsLoading(true);
     try {
-      await registerDonor({
-        ...form,
-        latitude: 0,
-        longitude: 0,
-        isAvailable: true,
-      });
+      await safeRequest(
+        registerDonor({
+          ...form,
+          bloodGroup: mapBloodGroupToBackend(form.bloodGroup),
+        }),
+      );
       Alert.alert("✅ Success", "Donor registered successfully!");
       setForm(INITIAL);
     } catch (e: unknown) {
@@ -127,6 +149,41 @@ export default function HospitalRegisterDonorScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
           />
+
+          <Input
+            label="Date of Birth *"
+            icon="calendar-outline"
+            placeholder="YYYY-MM-DD"
+            value={form.dateBirth}
+            onChangeText={set("dateBirth")}
+            error={errors.dateBirth}
+          />
+
+          <Text style={[styles.sectionLabel, { marginTop: spacing.md }]}>
+            Gender *
+          </Text>
+          <View style={styles.genderRow}>
+            {GENDERS.map((g) => (
+              <TouchableOpacity
+                key={g}
+                style={[
+                  styles.genderChip,
+                  form.genre === g && styles.genderChipActive,
+                ]}
+                onPress={() => set("genre")(g)}
+              >
+                <Text
+                  style={[
+                    styles.genderText,
+                    form.genre === g && styles.genderTextActive,
+                  ]}
+                >
+                  {g}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {errors.genre && <Text style={styles.errorText}>{errors.genre}</Text>}
         </Card>
 
         <Card padding="lg">
@@ -159,41 +216,55 @@ export default function HospitalRegisterDonorScreen() {
         </Card>
 
         <Card padding="lg">
-          <Text style={styles.sectionLabel}>Location</Text>
-          <Input
-            label="Address *"
-            icon="location-outline"
-            placeholder="Street address"
-            value={form.address}
-            onChangeText={set("address")}
-            error={errors.address}
-          />
-          <Input
-            label="City *"
-            icon="navigate-outline"
-            placeholder="City"
-            value={form.city}
-            onChangeText={set("city")}
-            error={errors.city}
-          />
+          <Text style={styles.sectionLabel}>Region *</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.regionScroll}
+          >
+            {REGIONS.map((r) => (
+              <TouchableOpacity
+                key={r}
+                style={[
+                  styles.bgChip,
+                  { width: "auto", paddingHorizontal: spacing.md },
+                  form.region === r && styles.bgChipActive,
+                ]}
+                onPress={() => set("region")(r)}
+              >
+                <Text
+                  style={[
+                    styles.bgChipText,
+                    form.region === r && styles.bgChipTextActive,
+                  ]}
+                >
+                  {r.replace("_", " ")}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          {errors.region && (
+            <Text style={styles.errorText}>{errors.region}</Text>
+          )}
+
           <View style={styles.row}>
             <View style={styles.flex1}>
               <Input
-                label="State"
-                icon="map-outline"
-                placeholder="State"
-                value={form.state}
-                onChangeText={set("state")}
+                label="Town *"
+                icon="navigate-outline"
+                placeholder="Town"
+                value={form.town}
+                onChangeText={set("town")}
+                error={errors.town}
               />
             </View>
             <View style={styles.flex1}>
               <Input
-                label="Pincode"
+                label="Neighbourhood"
                 icon="pin-outline"
-                placeholder="000000"
-                value={form.pincode}
-                onChangeText={set("pincode")}
-                keyboardType="numeric"
+                placeholder="Quartier"
+                value={form.neighbourhood}
+                onChangeText={set("neighbourhood")}
               />
             </View>
           </View>
@@ -268,6 +339,35 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.xs,
     color: colors.alertRed,
     marginBottom: spacing.sm,
+  },
+  genderRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  genderChip: {
+    flex: 1,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  genderChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  genderText: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textSecondary,
+  },
+  genderTextActive: { color: colors.white },
+  regionScroll: {
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
   },
   spacer: { height: spacing["2xl"] },
 });

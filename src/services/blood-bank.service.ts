@@ -5,13 +5,11 @@ type RegisterDonorDto = {
   email?: string;
   phone: string;
   bloodGroup: string;
-  address?: string;
-  city: string;
-  state?: string;
-  pincode?: string;
-  latitude: number;
-  longitude: number;
-  isAvailable?: boolean;
+  dateBirth: string;
+  region: string;
+  town: string;
+  neighbourhood?: string;
+  genre: string;
 };
 
 export async function registerDonor(data: RegisterDonorDto) {

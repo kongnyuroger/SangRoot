@@ -60,14 +60,24 @@ export default function HospitalSettingsScreen() {
               icon: "call-outline" as const,
             },
             {
-              label: "City",
-              value: profile?.city,
+              label: "Region",
+              value: (profile?.region as string)?.replace("_", " "),
+              icon: "map-outline" as const,
+            },
+            {
+              label: "Town",
+              value: profile?.town,
               icon: "navigate-outline" as const,
             },
             {
-              label: "State",
-              value: profile?.state,
-              icon: "map-outline" as const,
+              label: "Area",
+              value: profile?.neighbourhood,
+              icon: "pin-outline" as const,
+            },
+            {
+              label: "Address",
+              value: profile?.address,
+              icon: "location-outline" as const,
             },
             {
               label: "License",

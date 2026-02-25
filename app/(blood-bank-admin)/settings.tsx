@@ -48,9 +48,24 @@ export default function BloodBankSettingsScreen() {
               icon: "call-outline" as const,
             },
             {
-              label: "City",
-              value: profile?.city as string,
+              label: "Region",
+              value: (profile?.region as string)?.replace("_", " "),
+              icon: "map-outline" as const,
+            },
+            {
+              label: "Town",
+              value: profile?.town as string,
               icon: "navigate-outline" as const,
+            },
+            {
+              label: "Area",
+              value: profile?.neighbourhood as string,
+              icon: "pin-outline" as const,
+            },
+            {
+              label: "Address",
+              value: profile?.address as string,
+              icon: "location-outline" as const,
             },
             {
               label: "License",

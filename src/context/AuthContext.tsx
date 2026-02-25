@@ -47,11 +47,16 @@ const AuthContext = createContext<AuthContextValue>({
 function isProfileComplete(profile: UserProfile, role: UserRole): boolean {
   if (!profile) return false;
   if (role === "DOCTOR") {
-    // Doctors complete profile via accept-invite flow; check basic fields
-    return !!(profile.name || profile.email);
+    return !!(profile.name && profile.registrationNo);
   }
-  // Org roles require name, address, city, phone
-  return !!(profile.name && profile.address && profile.city && profile.phone);
+  // Org roles require name, phone, region, town, address
+  return !!(
+    profile.name &&
+    profile.phone &&
+    profile.region &&
+    profile.town &&
+    profile.address
+  );
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
