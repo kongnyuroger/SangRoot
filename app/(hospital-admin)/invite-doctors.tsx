@@ -3,12 +3,7 @@ import React, { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, Input } from "../../src/components/ui";
-import {
-  borderRadius,
-  colors,
-  spacing,
-  typography,
-} from "../../src/constants/theme";
+import { colors, spacing, typography } from "../../src/constants/theme";
 import { inviteDoctor } from "../../src/services/hospital.service";
 
 export default function InviteDoctorsScreen() {
@@ -16,7 +11,7 @@ export default function InviteDoctorsScreen() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [lastCode, setLastCode] = useState<string | null>(null);
+  const [lastInviteId, setLastInviteId] = useState<string | null>(null);
 
   const handleInvite = async () => {
     if (!email.trim()) {
@@ -31,14 +26,16 @@ export default function InviteDoctorsScreen() {
     setIsLoading(true);
     try {
       const res = (await inviteDoctor({ doctorEmail: email })) as any;
-      setLastCode(res?.inviteCode ?? res?.code ?? null);
+      // API returns { id, doctorEmail, status, createdAt }
+      const inviteId: string = res?.id ?? res?.inviteCode ?? res?.code ?? "";
+      setLastInviteId(inviteId);
       Alert.alert(
-        "Invite Sent",
-        `An invite has been generated for ${email}.\n\nNote: Email delivery is not yet active — share the invite code manually.`,
+        "Invite Sent ✉️",
+        `An invitation email has been sent to ${email}.\n\nThe doctor should check their inbox and use the invite code to complete registration.`,
       );
       setEmail("");
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to generate invite";
+      const msg = e instanceof Error ? e.message : "Failed to send invite";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -50,7 +47,7 @@ export default function InviteDoctorsScreen() {
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Invite Doctors</Text>
         <Text style={styles.pageSubtitle}>
-          Generate invite codes for your medical team
+          Send email invitations to your medical team
         </Text>
       </View>
 
@@ -58,19 +55,6 @@ export default function InviteDoctorsScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Notice */}
-        <View style={styles.notice}>
-          <Ionicons
-            name="information-circle-outline"
-            size={18}
-            color={colors.primary}
-          />
-          <Text style={styles.noticeText}>
-            Email delivery is not yet active. Copy and share the generated
-            invite code directly with the doctor.
-          </Text>
-        </View>
-
         <Card padding="lg">
           <Input
             label="Doctor's Email"
@@ -86,7 +70,7 @@ export default function InviteDoctorsScreen() {
             error={error}
           />
           <Button
-            title="Generate Invite"
+            title="Send Invite"
             icon="send-outline"
             onPress={handleInvite}
             loading={isLoading}
@@ -95,16 +79,26 @@ export default function InviteDoctorsScreen() {
           />
         </Card>
 
-        {lastCode && (
+        {lastInviteId && (
           <Card padding="lg" variant="outlined">
-            <Text style={styles.codeLabel}>Generated Invite Code</Text>
-            <View style={styles.codeBox}>
-              <Text style={styles.codeText}>{lastCode}</Text>
-              <Ionicons name="copy-outline" size={20} color={colors.primary} />
+            <View style={styles.successHeader}>
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={colors.successGreen}
+              />
+              <Text style={styles.codeLabel}>Invite Email Sent</Text>
             </View>
             <Text style={styles.codeHint}>
-              Share this code with the doctor to complete registration.
+              The invitation has been emailed to the doctor. The invite ID below
+              is for your reference.
             </Text>
+            <View style={styles.codeBox}>
+              <Text style={styles.codeText} numberOfLines={1}>
+                {lastInviteId}
+              </Text>
+              <Ionicons name="copy-outline" size={20} color={colors.primary} />
+            </View>
           </Card>
         )}
       </ScrollView>
@@ -132,20 +126,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   scrollContent: { padding: spacing["2xl"], gap: spacing.lg },
-  notice: {
-    flexDirection: "row",
-    gap: spacing.md,
-    backgroundColor: colors.primaryLight,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    alignItems: "flex-start",
-  },
-  noticeText: {
-    flex: 1,
-    fontSize: typography.fontSize.sm,
-    color: colors.primaryDark,
-    lineHeight: 20,
-  },
   codeLabel: {
     fontSize: typography.fontSize.xs,
     fontWeight: typography.fontWeight.bold,
@@ -159,7 +139,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: colors.lightGray,
-    borderRadius: borderRadius.md,
+    borderRadius: 8,
     padding: spacing.lg,
     marginBottom: spacing.sm,
   },
@@ -170,4 +150,10 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   codeHint: { fontSize: typography.fontSize.xs, color: colors.textSecondary },
+  successHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
 });
