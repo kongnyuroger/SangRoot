@@ -114,12 +114,50 @@ export async function safeRequest<T>(p: Promise<T>): Promise<T> {
   } catch (e) {
     if (e instanceof HTTPError) {
       const body = await e.response.text().catch(() => null);
-      let message = e.message;
+      let message = "";
+
       try {
         const parsed = body ? JSON.parse(body) : null;
-        message = parsed?.message || parsed?.error || message;
-      } catch (_) {}
-      throw new Error(message || "Network error");
+        if (parsed?.message) {
+          if (Array.isArray(parsed.message)) {
+            message = parsed.message.join("\n");
+          } else {
+            message = String(parsed.message);
+          }
+        } else if (parsed?.error) {
+          message = String(parsed.error);
+        }
+      } catch (_) {
+        // failed to parse JSON
+      }
+
+      // Fallback for common status codes if no specific message was found
+      if (!message) {
+        switch (e.response.status) {
+          case 400:
+            message = "Invalid request. Please check your data.";
+            break;
+          case 401:
+            message = "Session expired or unauthorized. Please login again.";
+            break;
+          case 403:
+            message = "You don't have permission for this action.";
+            break;
+          case 404:
+            message = "Resource not found.";
+            break;
+          case 429:
+            message = "Too many requests. Please wait a bit.";
+            break;
+          case 500:
+            message = "Server error. Our engineers have been notified.";
+            break;
+          default:
+            message = `Error ${e.response.status}: ${e.message}`;
+        }
+      }
+
+      throw new Error(message);
     }
     throw e;
   }

@@ -1,4 +1,4 @@
-import { rawClient } from "../lib/api";
+import { rawClient, safeRequest } from "../lib/api";
 import {
   getRefreshToken,
   removeAccessToken,
@@ -13,9 +13,11 @@ export async function login(
   email: string,
   password: string,
 ): Promise<LoginRes> {
-  const res = await rawClient
-    .post("auth/login", { json: { email, password } })
-    .json<LoginRes>();
+  const res = await safeRequest(
+    rawClient
+      .post("auth/login", { json: { email, password } })
+      .json<LoginRes>(),
+  );
   if (res.accessToken) {
     await setAccessToken(res.accessToken);
   }
@@ -30,9 +32,11 @@ export async function register(
   password: string,
   role?: string,
 ): Promise<LoginRes> {
-  const res = await rawClient
-    .post("auth/register", { json: { email, password, role } })
-    .json<LoginRes>();
+  const res = await safeRequest(
+    rawClient
+      .post("auth/register", { json: { email, password, role } })
+      .json<LoginRes>(),
+  );
   if (res.accessToken) await setAccessToken(res.accessToken);
   if (res.refreshToken) await setRefreshToken(res.refreshToken ?? "");
   return res;
@@ -75,9 +79,9 @@ export async function refreshToken(): Promise<{ accessToken?: string } | null> {
 export async function acceptInvite(
   data: Record<string, unknown>,
 ): Promise<LoginRes> {
-  const res = await rawClient
-    .post("auth/accept-invite", { json: data })
-    .json<LoginRes>();
+  const res = await safeRequest(
+    rawClient.post("auth/accept-invite", { json: data }).json<LoginRes>(),
+  );
 
   if (res.accessToken) await setAccessToken(res.accessToken);
   if (res.refreshToken) await setRefreshToken(res.refreshToken ?? "");

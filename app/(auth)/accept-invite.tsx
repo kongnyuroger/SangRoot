@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -66,7 +67,7 @@ export default function AcceptInviteScreen() {
     } catch (e: unknown) {
       const msg =
         e instanceof Error ? e.message : "Invalid invite ID or credentials";
-      setErrors({ inviteId: msg });
+      Alert.alert("Activation Error", msg);
     } finally {
       setIsLoading(false);
     }

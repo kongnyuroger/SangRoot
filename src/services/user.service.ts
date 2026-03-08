@@ -1,4 +1,4 @@
-import { api } from "../lib/api";
+import { api, safeRequest } from "../lib/api";
 import { getAccessToken } from "../lib/authStorage";
 import { getTokenRole } from "../lib/tokenUtils";
 
@@ -33,7 +33,7 @@ export async function getProfile(): Promise<UserProfile> {
       throw new Error("Unknown user role");
   }
 
-  return api.get(endpoint).json<UserProfile>();
+  return safeRequest(api.get(endpoint).json<UserProfile>());
 }
 
 export async function updateProfile(
@@ -59,7 +59,7 @@ export async function updateProfile(
       throw new Error("Unknown user role");
   }
 
-  return api.patch(endpoint, { json: data }).json<UserProfile>();
+  return safeRequest(api.patch(endpoint, { json: data }).json<UserProfile>());
 }
 
 export default { getProfile, updateProfile };

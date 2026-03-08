@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -75,7 +76,7 @@ export default function RegisterScreen() {
       // Guard in _layout.tsx will redirect to complete-profile
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Registration failed";
-      setErrors({ email: msg });
+      Alert.alert("Registration Error", msg);
     }
   };
 

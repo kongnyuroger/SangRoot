@@ -1,4 +1,4 @@
-import { api } from "../lib/api";
+import { api, safeRequest } from "../lib/api";
 
 type RegisterDonorDto = {
   name: string;
@@ -15,7 +15,7 @@ type RegisterDonorDto = {
 };
 
 export async function registerDonor(data: RegisterDonorDto) {
-  return api.post("doctors/donors", { json: data }).json();
+  return safeRequest(api.post("doctors/donors", { json: data }).json());
 }
 
 export default { registerDonor };

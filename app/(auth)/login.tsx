@@ -51,7 +51,7 @@ export default function LoginScreen() {
       // Navigation guard in _layout.tsx handles routing after refreshUser
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Login failed";
-      setErrors({ password: msg });
+      Alert.alert("Login Error", msg);
     }
   };
 

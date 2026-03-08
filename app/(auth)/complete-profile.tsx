@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -145,7 +146,7 @@ export default function CompleteProfileScreen() {
       await refreshUser();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to save profile";
-      setErrors({ name: msg });
+      Alert.alert("Submission Error", msg);
     } finally {
       setIsLoading(false);
     }
