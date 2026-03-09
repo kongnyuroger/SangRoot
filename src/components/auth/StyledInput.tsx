@@ -71,6 +71,8 @@ export const StyledInput: React.FC<StyledInputProps> = ({
           style={[styles.input, icon && styles.inputWithIcon]}
           placeholderTextColor={colors.textLight}
           secureTextEntry={isPassword && !isPasswordVisible}
+          textContentType={isPassword ? "none" : undefined}
+          autoComplete={isPassword ? "off" : undefined}
           {...textInputProps}
         />
 
