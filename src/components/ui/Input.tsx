@@ -76,6 +76,8 @@ export function Input({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={isSecure}
+          textContentType={isSecure ? "none" : undefined}
+          autoComplete={isSecure ? "off" : undefined}
           {...rest}
         />
         {secureToggle && (
