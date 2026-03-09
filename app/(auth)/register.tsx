@@ -12,13 +12,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Card, Input } from "../../src/components/ui";
-import {
-  borderRadius,
-  colors,
-  spacing,
-  typography,
-} from "../../src/constants/theme";
+import { Button, Input } from "../../src/components/ui";
+import { colors, spacing, typography } from "../../src/constants/theme";
 import { useAuth } from "../../src/context";
 import { useRegister } from "../../src/hooks/useAuthHooks";
 
@@ -73,7 +68,6 @@ export default function RegisterScreen() {
     try {
       await mutation.mutateAsync({ email, password, role });
       await refreshUser();
-      // Guard in _layout.tsx will redirect to complete-profile
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Registration failed";
       Alert.alert("Registration Error", msg);
@@ -86,63 +80,70 @@ export default function RegisterScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-        <View
-          style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
-        >
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Register</Text>
-          <Text style={styles.headerSubtitle}>
-            Create your organisation account
-          </Text>
-        </View>
-
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Card padding="lg" style={styles.formCard}>
+          {/* ── HEADER (scrolls with content) ── */}
+          <View
+            style={[styles.topSection, { paddingTop: insets.top + spacing.md }]}
+          >
+            <View style={styles.blobTopRight} />
+            <View style={styles.blobBottomLeft} />
+
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+            >
+              <Text style={styles.backText}>← Back</Text>
+            </TouchableOpacity>
+
+            <View style={styles.logoMark}>
+              <Text style={styles.logoEmoji}>🏢</Text>
+            </View>
+
+            <Text style={styles.heading}>
+              Register Org<Text style={styles.headingAccent}>.</Text>
+            </Text>
+            <Text style={styles.subheading}>
+              Create your organisation account
+            </Text>
+          </View>
+
+          {/* ── FORM ── */}
+          <View style={styles.formContent}>
             {/* Role selector */}
             <Text style={styles.roleLabel}>Organisation Type</Text>
-            <View style={styles.roleRow}>
-              {roleOptions.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[
-                    styles.roleChip,
-                    role === opt.value && styles.roleChipActive,
-                  ]}
-                  onPress={() => setRole(opt.value)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.roleEmoji}>{opt.icon}</Text>
-                  <View>
+            <View style={styles.roleGrid}>
+              {roleOptions.map((opt) => {
+                const active = role === opt.value;
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[styles.roleCard, active && styles.roleCardActive]}
+                    onPress={() => setRole(opt.value)}
+                    activeOpacity={0.8}
+                  >
+                    {active && (
+                      <View style={styles.checkBadge}>
+                        <Ionicons name="checkmark" size={11} color="#fff" />
+                      </View>
+                    )}
+                    <Text style={styles.roleIcon}>{opt.icon}</Text>
                     <Text
                       style={[
-                        styles.roleChipLabel,
-                        role === opt.value && styles.roleChipLabelActive,
+                        styles.roleCardName,
+                        active && styles.roleCardNameActive,
                       ]}
                     >
                       {opt.label}
                     </Text>
-                    <Text style={styles.roleChipDesc}>{opt.desc}</Text>
-                  </View>
-                  {role === opt.value && (
-                    <View style={styles.checkmark}>
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={colors.white}
-                      />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
+                    <Text style={styles.roleCardDesc}>{opt.desc}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             <Input
@@ -184,13 +185,13 @@ export default function RegisterScreen() {
               size="lg"
               style={styles.submitBtn}
             />
-          </Card>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-              <Text style={styles.footerLink}>Sign In</Text>
-            </TouchableOpacity>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+                <Text style={styles.footerLink}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -198,86 +199,150 @@ export default function RegisterScreen() {
   );
 }
 
+const ORANGE = "#F05A28";
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: colors.background },
-  headerStrip: {
-    backgroundColor: colors.primary,
+  container: { flex: 1, backgroundColor: "#F7F7F8" },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+
+  /* ── HEADER ── */
+  topSection: {
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: spacing["2xl"],
-    paddingBottom: spacing["3xl"],
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    paddingBottom: spacing["2xl"],
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  backBtn: { marginBottom: spacing.xl },
+  blobTopRight: {
+    position: "absolute",
+    top: -60,
+    right: -60,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "rgba(240,90,40,0.09)",
+  },
+  blobBottomLeft: {
+    position: "absolute",
+    bottom: -30,
+    left: -30,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: "rgba(240,90,40,0.06)",
+  },
+
+  backBtn: { marginBottom: spacing.lg },
   backText: {
     fontSize: typography.fontSize.sm,
-    color: "rgba(255,255,255,0.8)",
+    color: "#8A8A9A",
     fontWeight: typography.fontWeight.medium,
   },
-  headerTitle: {
-    fontSize: typography.fontSize["4xl"],
-    fontWeight: typography.fontWeight.bold,
-    color: colors.white,
-    marginBottom: spacing.sm,
-  },
-  headerSubtitle: {
-    fontSize: typography.fontSize.base,
-    color: "rgba(255,255,255,0.75)",
-  },
-  scroll: { flex: 1 },
-  scrollContent: {
-    padding: spacing["2xl"],
-    paddingTop: spacing["3xl"],
-    gap: spacing["2xl"],
-  },
-  formCard: { marginTop: -spacing["4xl"] },
-  roleLabel: {
-    fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
-  },
-  roleRow: { gap: spacing.md, marginBottom: spacing.xl },
-  roleChip: {
-    flexDirection: "row",
+  logoMark: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: ORANGE,
     alignItems: "center",
-    gap: spacing.md,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    backgroundColor: colors.white,
+    justifyContent: "center",
+    marginBottom: spacing.md,
+    shadowColor: ORANGE,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  roleChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
+  logoEmoji: { fontSize: 20 },
+  heading: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#1A1A2E",
+    letterSpacing: -0.5,
+    lineHeight: 34,
+    marginBottom: spacing.xs,
   },
-  roleEmoji: { fontSize: 22 },
-  roleChipLabel: {
-    fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.textPrimary,
+  headingAccent: { color: ORANGE },
+  subheading: { fontSize: typography.fontSize.sm, color: "#8A8A9A" },
+
+  /* ── FORM ── */
+  formContent: {
+    padding: spacing["2xl"],
+    gap: spacing.lg,
+    paddingBottom: spacing["3xl"],
   },
-  roleChipLabelActive: { color: colors.primaryDark },
-  roleChipDesc: {
+
+  /* Role selector */
+  roleLabel: {
     fontSize: typography.fontSize.xs,
-    color: colors.textSecondary,
+    fontWeight: typography.fontWeight.bold,
+    color: "#1A1A2E",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginBottom: -spacing.xs,
   },
-  checkmark: {
-    marginLeft: "auto",
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.primary,
+  roleGrid: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  roleCard: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E8E8F0",
+    borderRadius: 16,
+    padding: spacing.lg,
+    gap: spacing.xs,
+    position: "relative",
+  },
+  roleCardActive: {
+    borderColor: ORANGE,
+    backgroundColor: "#FFF1EB",
+    shadowColor: ORANGE,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  checkBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: ORANGE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  roleIcon: { fontSize: 22, marginBottom: 2 },
+  roleCardName: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.bold,
+    color: "#1A1A2E",
+  },
+  roleCardNameActive: { color: "#C04010" },
+  roleCardDesc: {
+    fontSize: typography.fontSize.xs,
+    color: "#8A8A9A",
+    lineHeight: 16,
+  },
+
+  submitBtn: { marginTop: spacing.sm },
+  footer: {
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
-  submitBtn: { marginTop: spacing.md },
-  footer: { flexDirection: "row", justifyContent: "center" },
-  footerText: { fontSize: typography.fontSize.sm, color: colors.textSecondary },
+  footerText: { fontSize: typography.fontSize.sm, color: "#8A8A9A" },
   footerLink: {
     fontSize: typography.fontSize.sm,
     fontWeight: typography.fontWeight.bold,
-    color: colors.primary,
+    color: ORANGE,
   },
 });

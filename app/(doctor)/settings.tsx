@@ -58,7 +58,6 @@ export default function DoctorSettingsScreen() {
           <Text style={styles.sectionLabel}>Account</Text>
           <Button
             title="Sign Out"
-            variant="danger"
             icon="log-out-outline"
             onPress={() =>
               Alert.alert("Sign Out", "Are you sure?", [
