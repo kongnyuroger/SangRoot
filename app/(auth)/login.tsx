@@ -11,13 +11,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Card, Input } from "../../src/components/ui";
-import {
-  borderRadius,
-  colors,
-  spacing,
-  typography,
-} from "../../src/constants/theme";
+import { Button, Input } from "../../src/components/ui";
+import { colors, spacing, typography } from "../../src/constants/theme";
 import { useAuth } from "../../src/context";
 import { useLogin } from "../../src/hooks/useAuthHooks";
 
@@ -48,7 +43,6 @@ export default function LoginScreen() {
     try {
       await mutation.mutateAsync({ email, password });
       await refreshUser();
-      // Navigation guard in _layout.tsx handles routing after refreshUser
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Login failed";
       Alert.alert("Login Error", msg);
@@ -61,26 +55,38 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-        {/* Header strip */}
-        <View
-          style={[styles.headerStrip, { paddingTop: insets.top + spacing.xl }]}
-        >
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Sign In</Text>
-          <Text style={styles.headerSubtitle}>Welcome back to SangRoot</Text>
-        </View>
-
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Card padding="lg" style={styles.formCard}>
+          {/* ── HEADER (scrolls with content) ── */}
+          <View
+            style={[styles.topSection, { paddingTop: insets.top + spacing.md }]}
+          >
+            <View style={styles.blobTopRight} />
+            <View style={styles.blobBottomLeft} />
+
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+            >
+              <Text style={styles.backText}>← Back</Text>
+            </TouchableOpacity>
+
+            <View>
+              <Text style={styles.logoEmoji}>🩸</Text>
+            </View>
+
+            <Text style={styles.heading}>
+              Welcome back<Text style={styles.headingAccent}>.</Text>
+            </Text>
+            <Text style={styles.subheading}>Sign in to SangRoot</Text>
+          </View>
+
+          {/* ── FORM ── */}
+          <View style={styles.formContent}>
             <Input
               label="Email Address"
               icon="mail-outline"
@@ -124,11 +130,14 @@ export default function LoginScreen() {
               size="lg"
               style={styles.submitBtn}
             />
-          </Card>
 
-          {/* Register section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>DON'T HAVE AN ACCOUNT?</Text>
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>DON'T HAVE AN ACCOUNT?</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             <Button
               title="Register Organisation"
               variant="outline"
@@ -140,6 +149,7 @@ export default function LoginScreen() {
               variant="ghost"
               icon="mail-open-outline"
               onPress={() => router.push("/(auth)/accept-invite")}
+              style={styles.ghostBtn}
             />
           </View>
         </ScrollView>
@@ -148,46 +158,96 @@ export default function LoginScreen() {
   );
 }
 
+const ORANGE = "#F05A28";
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: colors.background },
-  headerStrip: {
-    backgroundColor: colors.primary,
+  container: { flex: 1, backgroundColor: "#F7F7F8" },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+
+  /* ── HEADER ── */
+  topSection: {
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: spacing["2xl"],
-    paddingBottom: spacing["3xl"],
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    paddingBottom: spacing["2xl"],
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  backBtn: { marginBottom: spacing.xl },
+  blobTopRight: {
+    position: "absolute",
+    top: -60,
+    right: -60,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "rgba(240,90,40,0.09)",
+  },
+  blobBottomLeft: {
+    position: "absolute",
+    bottom: -30,
+    left: -30,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: "rgba(240,90,40,0.06)",
+  },
+
+  backBtn: { marginBottom: spacing.lg },
   backText: {
     fontSize: typography.fontSize.sm,
-    color: "rgba(255,255,255,0.8)",
+    color: "#8A8A9A",
     fontWeight: typography.fontWeight.medium,
   },
-  headerTitle: {
-    fontSize: typography.fontSize["4xl"],
-    fontWeight: typography.fontWeight.bold,
-    color: colors.white,
-    marginBottom: spacing.sm,
+  logoMark: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: ORANGE,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+    shadowColor: ORANGE,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  headerSubtitle: {
-    fontSize: typography.fontSize.base,
-    color: "rgba(255,255,255,0.75)",
+  logoEmoji: { fontSize: 20 },
+  heading: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#1A1A2E",
+    letterSpacing: -0.5,
+    lineHeight: 34,
+    marginBottom: spacing.xs,
   },
-  scroll: { flex: 1 },
-  scrollContent: {
+  headingAccent: { color: ORANGE },
+  subheading: { fontSize: typography.fontSize.sm, color: "#8A8A9A" },
+
+  /* ── FORM ── */
+  formContent: {
     padding: spacing["2xl"],
-    paddingTop: spacing["3xl"],
-    gap: spacing["2xl"],
+    gap: spacing.lg,
+    paddingBottom: spacing["3xl"],
   },
-  formCard: { marginTop: -spacing["4xl"] },
-  submitBtn: { marginTop: spacing.md },
-  section: { gap: spacing.md },
-  sectionLabel: {
+  submitBtn: { marginTop: spacing.sm },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#E8E8F0" },
+  dividerText: {
     fontSize: typography.fontSize.xs,
     fontWeight: typography.fontWeight.bold,
-    color: colors.textLight,
-    letterSpacing: 1,
-    textAlign: "center",
+    color: "#8A8A9A",
+    letterSpacing: 0.8,
   },
+  ghostBtn: { marginTop: -spacing.xs },
 });
