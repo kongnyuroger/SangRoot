@@ -1,16 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, Input } from "../../src/components/ui";
 import {
@@ -93,6 +93,19 @@ const REGION_LABELS: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Format a Date object to a readable "DD MMM YYYY" string */
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -126,7 +139,8 @@ export default function DoctorRequestScreen() {
   const [region, setRegion] = useState("");
   const [town, setTown] = useState("");
   const [neighbourhood, setNeighbourhood] = useState("");
-  const [requiredByText, setRequiredByText] = useState(""); // YYYY-MM-DD
+  const [requiredBy, setRequiredBy] = useState<Date | null>(null); // ← Date object
+  const [showDatePicker, setShowDatePicker] = useState(false); // ← picker visibility
   const [medicalReason, setMedicalReason] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -166,11 +180,21 @@ export default function DoctorRequestScreen() {
     hospitalName.trim() !== "" &&
     region !== "" &&
     town.trim() !== "" &&
-    requiredByText.trim() !== "";
+    requiredBy !== null; // ← check Date object
+
+  // ── Date picker handler ────────────────────────────────────────────────
+  const handleDateChange = useCallback(
+    (_event: unknown, selectedDate?: Date) => {
+      // On Android the picker closes itself; on iOS keep it open until dismissed
+      if (Platform.OS === "android") setShowDatePicker(false);
+      if (selectedDate) setRequiredBy(selectedDate);
+    },
+    [],
+  );
 
   // ── Submit handler ─────────────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
-    if (!isValid) return;
+    if (!isValid || !requiredBy) return;
 
     setLoading(true);
     try {
@@ -188,7 +212,7 @@ export default function DoctorRequestScreen() {
               region,
               town: town.trim(),
               neighbourhood: neighbourhood.trim() || undefined,
-              requiredBy: new Date(requiredByText).toISOString(),
+              requiredBy: requiredBy.toISOString(), // ← ISO string from Date
               medicalReason: medicalReason.trim() || undefined,
               notes: notes.trim() || undefined,
             },
@@ -209,7 +233,7 @@ export default function DoctorRequestScreen() {
       setPatientName("");
       setPatientAge("");
       setPatientGender("MALE");
-      setRequiredByText("");
+      setRequiredBy(null);
       setMedicalReason("");
       setNotes("");
     } catch (err) {
@@ -231,7 +255,7 @@ export default function DoctorRequestScreen() {
     region,
     town,
     neighbourhood,
-    requiredByText,
+    requiredBy,
     medicalReason,
     notes,
   ]);
@@ -252,9 +276,12 @@ export default function DoctorRequestScreen() {
           <Text style={styles.loadingText}>Loading your profile…</Text>
         </View>
       ) : (
-        <ScrollView
+        // ── KeyboardAwareScrollView keeps inputs visible above keyboard ──
+        <KeyboardAwareScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          enableOnAndroid
+          extraScrollHeight={16}
         >
           {/* ── Blood Group ─────────────────────────────────────────── */}
           <Card padding="lg">
@@ -329,13 +356,55 @@ export default function DoctorRequestScreen() {
               keyboardType="numeric"
             />
             <View style={{ height: spacing.md }} />
-            <Input
-              label="Required By (Date) *"
-              icon="calendar-outline"
-              placeholder="YYYY-MM-DD"
-              value={requiredByText}
-              onChangeText={setRequiredByText}
-            />
+
+            {/* ── Date picker trigger ───────────────────────────────── */}
+            <Text style={styles.fieldLabel}>Required By (Date) *</Text>
+            <TouchableOpacity
+              style={styles.pickerTrigger}
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={18}
+                color={colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.pickerText,
+                  !requiredBy && { color: colors.textLight },
+                ]}
+              >
+                {requiredBy ? formatDate(requiredBy) : "Select date"}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+
+            {/* Native date picker — shown inline on iOS, as dialog on Android */}
+            {showDatePicker && (
+              <DateTimePicker
+                value={requiredBy ?? new Date()}
+                mode="date"
+                display={Platform.OS === "ios" ? "inline" : "default"}
+                minimumDate={new Date()}
+                onChange={handleDateChange}
+                style={Platform.OS === "ios" ? styles.iosDatePicker : undefined}
+              />
+            )}
+
+            {/* iOS dismiss button */}
+            {showDatePicker && Platform.OS === "ios" && (
+              <TouchableOpacity
+                style={styles.iosDismiss}
+                onPress={() => setShowDatePicker(false)}
+              >
+                <Text style={styles.iosDismissText}>Done</Text>
+              </TouchableOpacity>
+            )}
           </Card>
 
           {/* ── Patient Info ────────────────────────────────────────── */}
@@ -508,7 +577,7 @@ export default function DoctorRequestScreen() {
             />
           )}
           <View style={{ height: spacing["2xl"] }} />
-        </ScrollView>
+        </KeyboardAwareScrollView>
       )}
     </View>
   );
@@ -628,7 +697,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   genderTextActive: { color: colors.white },
-  // Region picker
+  // Shared picker trigger style (used for both region & date)
   pickerTrigger: {
     flexDirection: "row",
     alignItems: "center",
@@ -644,6 +713,25 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.base,
     color: colors.textPrimary,
   },
+  // iOS date picker
+  iosDatePicker: {
+    marginTop: spacing.sm,
+    alignSelf: "stretch",
+  },
+  iosDismiss: {
+    alignSelf: "flex-end",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+  },
+  iosDismissText: {
+    color: colors.white,
+    fontWeight: typography.fontWeight.semibold,
+    fontSize: typography.fontSize.sm,
+  },
+  // Region list
   regionList: {
     marginTop: spacing.sm,
     borderWidth: 1,
