@@ -35,7 +35,7 @@ export default function DoctorHome() {
         <View>
           <Text style={styles.greeting}>{getGreeting()},</Text>
           <Text style={styles.name} numberOfLines={1}>
-            Dr. {user?.profile?.name ?? "Doctor"}
+            {user?.profile?.name ?? "Doctor"}
           </Text>
         </View>
         <View style={styles.avatar}>
@@ -97,6 +97,11 @@ export default function DoctorHome() {
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionsRow}>
           {[
+            {
+              label: "Register Donor",
+              icon: "person-add-outline" as const,
+              route: "./register-donor",
+            },
             {
               label: "Blood Request",
               icon: "water-outline" as const,
