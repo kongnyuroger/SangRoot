@@ -68,7 +68,7 @@ export async function refreshToken(): Promise<{ accessToken?: string } | null> {
       await setRefreshToken(res.refreshToken);
     }
     return { accessToken: res.accessToken };
-  } catch (e) {
+  } catch (_e) {
     await removeAccessToken();
     await removeRefreshToken();
     return null;
@@ -89,4 +89,28 @@ export async function acceptInvite(
   return res;
 }
 
-export default { login, logout, register, refreshToken, acceptInvite };
+export async function googleLogin(
+  idToken: string,
+  role?: string,
+): Promise<LoginRes> {
+  const body: { idToken: string; role?: string } = { idToken };
+  if (role) body.role = role;
+
+  const res = await safeRequest(
+    rawClient.post("auth/google", { json: body }).json<LoginRes>(),
+  );
+
+  if (res.accessToken) await setAccessToken(res.accessToken);
+  if (res.refreshToken) await setRefreshToken(res.refreshToken ?? "");
+
+  return res;
+}
+
+export default {
+  login,
+  logout,
+  register,
+  refreshToken,
+  acceptInvite,
+  googleLogin,
+};

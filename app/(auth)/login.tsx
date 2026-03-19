@@ -1,6 +1,9 @@
+import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -12,15 +15,39 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Input } from "../../src/components/ui";
-import { colors, spacing, typography } from "../../src/constants/theme";
+import { spacing, typography } from "../../src/constants/theme";
 import { useAuth } from "../../src/context";
-import { useLogin } from "../../src/hooks/useAuthHooks";
+import { useGoogleAuth, useLogin } from "../../src/hooks/useAuthHooks";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { refreshUser } = useAuth();
   const mutation = useLogin();
+  const googleMutation = useGoogleAuth();
+
+  const [_request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  });
+
+  React.useEffect(() => {
+    if (response?.type === "success" && response.authentication?.idToken) {
+      const idToken = response.authentication.idToken;
+      (async () => {
+        try {
+          await googleMutation.mutateAsync({ idToken });
+          await refreshUser();
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : "Google sign-in failed";
+          Alert.alert("Google Sign-In Error", msg);
+        }
+      })();
+    }
+  }, [response, googleMutation, refreshUser]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -130,6 +157,27 @@ export default function LoginScreen() {
               size="lg"
               style={styles.submitBtn}
             />
+
+            {/* Google Sign-In */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={styles.googleBtn}
+              onPress={() => promptAsync()}
+              disabled={googleMutation.isLoading}
+              activeOpacity={0.8}
+            >
+              {googleMutation.isLoading ? (
+                <ActivityIndicator size="small" color="#4285F4" />
+              ) : (
+                <Text style={styles.googleIcon}>G</Text>
+              )}
+              <Text style={styles.googleBtnText}>Continue with Google</Text>
+            </TouchableOpacity>
 
             {/* Divider */}
             <View style={styles.divider}>
@@ -250,4 +298,31 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   ghostBtn: { marginTop: -spacing.xs },
+  googleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  googleIcon: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#4285F4",
+  },
+  googleBtnText: {
+    fontSize: typography.fontSize.base,
+    fontWeight: "600",
+    color: "#3C4043",
+  },
 });
