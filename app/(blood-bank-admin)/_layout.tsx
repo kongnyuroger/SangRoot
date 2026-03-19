@@ -13,9 +13,9 @@ export default function BloodBankAdminLayout() {
           backgroundColor: colors.white,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 90,
+          paddingBottom: 40,
+          paddingTop: 5,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}

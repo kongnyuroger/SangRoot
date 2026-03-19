@@ -51,3 +51,18 @@ export function useUpdateProfile() {
     },
   );
 }
+
+export function useGoogleAuth() {
+  const qc = useQueryClient();
+  const mutation = useMutation(
+    ({ idToken, role }: { idToken: string; role?: string }) =>
+      authService.googleLogin(idToken, role),
+    {
+      onSuccess: async () => {
+        await qc.invalidateQueries(["profile"]);
+      },
+    },
+  );
+
+  return mutation;
+}
