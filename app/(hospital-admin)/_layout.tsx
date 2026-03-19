@@ -13,9 +13,9 @@ export default function HospitalAdminLayout() {
           backgroundColor: colors.white,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 90,
+          paddingBottom: 40,
+          paddingTop: 5,
         },
         tabBarLabelStyle: {
           fontSize: 11,
