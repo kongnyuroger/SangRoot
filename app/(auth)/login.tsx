@@ -28,12 +28,33 @@ export default function LoginScreen() {
   const mutation = useLogin();
   const googleMutation = useGoogleAuth();
 
-  const [_request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  });
+  // Check if Google client IDs are actually set (not undefined or empty)
+  const hasGoogleConfig = !!(
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID &&
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID !== "" &&
+    (Platform.OS === "ios" 
+      ? process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID && process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID !== ""
+      : process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID && process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID !== "")
+  );
 
+  // Store Google auth response
+  const [googleResponse, setGoogleResponse] = useState<any>(null);
+
+  // Only initialize Google auth if config exists - use conditional hook
+  let googleAuth: any = [null, null, () => {}];
+  
+  if (hasGoogleConfig) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    googleAuth = Google.useAuthRequest({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    });
+  }
+
+  const [_request, response, promptAsync] = googleAuth;
+
+  // Handle Google response
   React.useEffect(() => {
     if (response?.type === "success" && response.authentication?.idToken) {
       const idToken = response.authentication.idToken;
@@ -158,26 +179,30 @@ export default function LoginScreen() {
               style={styles.submitBtn}
             />
 
-            {/* Google Sign-In */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
+            {/* Google Sign-In - Only show if configured */}
+            {hasGoogleConfig && (
+              <>
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.dividerLine} />
+                </View>
 
-            <TouchableOpacity
-              style={styles.googleBtn}
-              onPress={() => promptAsync()}
-              disabled={googleMutation.isLoading}
-              activeOpacity={0.8}
-            >
-              {googleMutation.isLoading ? (
-                <ActivityIndicator size="small" color="#4285F4" />
-              ) : (
-                <Text style={styles.googleIcon}>G</Text>
-              )}
-              <Text style={styles.googleBtnText}>Continue with Google</Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.googleBtn}
+                  onPress={() => promptAsync && promptAsync()}
+                  disabled={googleMutation.isLoading}
+                  activeOpacity={0.8}
+                >
+                  {googleMutation.isLoading ? (
+                    <ActivityIndicator size="small" color="#4285F4" />
+                  ) : (
+                    <Text style={styles.googleIcon}>G</Text>
+                  )}
+                  <Text style={styles.googleBtnText}>Continue with Google</Text>
+                </TouchableOpacity>
+              </>
+            )}
 
             {/* Divider */}
             <View style={styles.divider}>
@@ -251,20 +276,6 @@ const styles = StyleSheet.create({
     color: "#8A8A9A",
     fontWeight: typography.fontWeight.medium,
   },
-  logoMark: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
-    backgroundColor: ORANGE,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.md,
-    shadowColor: ORANGE,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
-  },
   logoEmoji: { fontSize: 20 },
   heading: {
     fontSize: 30,
@@ -324,5 +335,30 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.base,
     fontWeight: "600",
     color: "#3C4043",
+  },
+  doctorLoginBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E31837",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    shadowColor: "#E31837",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  doctorLoginIcon: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  doctorLoginText: {
+    fontSize: typography.fontSize.base,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });
