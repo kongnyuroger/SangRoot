@@ -33,10 +33,7 @@ export default function Onboarding1Screen() {
         {/* Headline */}
         <View style={styles.textBlock}>
           <Text style={styles.title}>Welcome to{"\n"}SangRoot</Text>
-          <Text style={styles.subtitle}>
-            The emergency blood network connecting hospitals, blood banks, and
-            donors — when every second counts.
-          </Text>
+          <Text style={styles.subtitle}>The emergency blood network</Text>
         </View>
 
         {/* Feature pills */}
