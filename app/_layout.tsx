@@ -57,13 +57,5 @@ function RootNavigationGuard() {
   return null;
 }
 
-export default function RootLayout() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RootNavigationGuard />
-        <Stack screenOptions={{ headerShown: false }} />
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
+
+

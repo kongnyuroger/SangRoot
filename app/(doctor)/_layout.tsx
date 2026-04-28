@@ -47,7 +47,6 @@ export default function DoctorLayout() {
           ),
         }}
       />
-
       <Tabs.Screen
         name="register-donor"
         options={{
