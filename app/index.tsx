@@ -13,31 +13,10 @@ import {
 import { useAuth } from "../src/context";
 import { hasCompletedOnboarding } from "../src/lib/authStorage";
 
-const options = [
-  {
-    icon: "business-outline" as const,
-    title: "Hospital",
-    description: "Manage donors, doctors & blood requests",
-    route: "/(auth)/login" as const,
-  },
-  {
-    icon: "water-outline" as const,
-    title: "Blood Bank",
-    description: "Manage supply & respond to requests",
-    route: "/(auth)/login" as const,
-  },
-  {
-    icon: "medical-outline" as const,
-    title: "Doctor",
-    description: "Request blood & register donors",
-    route: "/(auth)/accept-invite" as const,
-  },
-];
-
 export default function RootScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   // biome-ignore lint: correctness/useExhaustiveDependencies
@@ -81,34 +60,58 @@ export default function RootScreen() {
 
         {/* Option cards */}
         <View style={styles.cards}>
-          {options.map((opt) => (
-            <TouchableOpacity
-              key={opt.title}
-              style={styles.card}
-              onPress={() => router.push(opt.route)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.cardIcon}>
-                <Ionicons name={opt.icon} size={26} color={colors.primary} />
-              </View>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{opt.title}</Text>
-                <Text style={styles.cardDesc}>{opt.description}</Text>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={colors.border}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
+          {/* Sign In — primary filled card */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardPrimary]}
+            activeOpacity={0.85}
+            onPress={() => router.push("/(auth)/login")}
+          >
+            <Ionicons name="log-in-outline" size={22} color={colors.white} />
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitleWhite}>Sign In</Text>
+              <Text style={styles.cardDescWhite}>Already have an account</Text>
+            </View>
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color="rgba(255,255,255,0.7)"
+            />
+          </TouchableOpacity>
 
-        {/* Register section */}
-        <View style={styles.registerRow}>
-          <Text style={styles.registerText}>New organisation? </Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
-            <Text style={styles.registerLink}>Register here</Text>
+          {/* Register Organisation — outline card */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardOutline]}
+            activeOpacity={0.85}
+            onPress={() => router.push("/(auth)/register")}
+          >
+            <Ionicons
+              name="business-outline"
+              size={22}
+              color={colors.primary}
+            />
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>Register Organisation</Text>
+              <Text style={styles.cardDesc}>Hospital or Blood Bank</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={20} color={colors.border} />
+          </TouchableOpacity>
+
+          {/* Accept Doctor Invite — outline card */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardOutline]}
+            activeOpacity={0.85}
+            onPress={() => router.push("/(auth)/accept-invite")}
+          >
+            <Ionicons
+              name="mail-open-outline"
+              size={22}
+              color={colors.primary}
+            />
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>Accept Doctor Invite</Text>
+              <Text style={styles.cardDesc}>Enter your invite code</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={20} color={colors.border} />
           </TouchableOpacity>
         </View>
       </View>
@@ -151,25 +154,29 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
-    gap: spacing.lg,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    gap: spacing.md,
   },
-  cardIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primaryLight,
-    justifyContent: "center",
-    alignItems: "center",
+  cardPrimary: {
+    backgroundColor: colors.primary,
   },
-  cardBody: { flex: 1 },
+  cardOutline: {
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  cardText: { flex: 1 },
+  cardTitleWhite: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.white,
+    marginBottom: 2,
+  },
+  cardDescWhite: {
+    fontSize: typography.fontSize.sm,
+    color: "rgba(255,255,255,0.75)",
+  },
   cardTitle: {
     fontSize: typography.fontSize.base,
     fontWeight: typography.fontWeight.bold,
@@ -179,20 +186,5 @@ const styles = StyleSheet.create({
   cardDesc: {
     fontSize: typography.fontSize.sm,
     color: colors.textSecondary,
-    lineHeight: 18,
-  },
-  registerRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  registerText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
-  },
-  registerLink: {
-    fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.primary,
   },
 });
