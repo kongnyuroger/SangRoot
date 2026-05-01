@@ -99,7 +99,7 @@ export default function HospitalSettingsScreen() {
         <Card padding="lg" variant="outlined">
           <Text style={styles.sectionLabel}>Account</Text>
           <Button
-            title="Sign Out"
+            title="Log Out"
             icon="log-out-outline"
             onPress={handleLogout}
           />

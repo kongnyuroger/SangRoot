@@ -265,9 +265,6 @@ export default function DoctorRequestScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Blood Request</Text>
-        <Text style={styles.pageSubtitle}>
-          Raise an emergency blood request — our AI will handle outreach
-        </Text>
       </View>
 
       {profileLoading ? (

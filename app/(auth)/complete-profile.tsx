@@ -233,7 +233,7 @@ export default function CompleteProfileScreen() {
             <Input
               label="Phone *"
               icon="call-outline"
-              placeholder="+91 00000 00000"
+              placeholder="+237 67X XX XX XX"
               value={formData.phone}
               onChangeText={set("phone")}
               keyboardType="phone-pad"

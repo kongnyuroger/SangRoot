@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -27,7 +27,8 @@ const quickActions = [
   },
   {
     label: "Invite Doctor",
-    icon: "mail-outline" as const,
+    icon: "stethoscope" as const,
+    iconSet: "material" as const,
     route: "./invite-doctors",
   },
   {
@@ -43,6 +44,25 @@ function getGreeting() {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+function AppIcon({
+  name,
+  iconSet,
+  size,
+  color,
+}: {
+  name: string;
+  iconSet?: "material";
+  size: number;
+  color: string;
+}) {
+  if (iconSet === "material") {
+    return (
+      <MaterialCommunityIcons name={name as any} size={size} color={color} />
+    );
+  }
+  return <Ionicons name={name as any} size={size} color={color} />;
 }
 
 type StatsData = {
@@ -81,7 +101,8 @@ export default function HospitalAdminHome() {
     {
       label: "Doctors",
       value: statsData ? statsData.doctors.toString() : "—",
-      icon: "medical-outline" as const,
+      icon: "stethoscope" as const,
+      iconSet: "material" as const,
       color: "#3B82F6",
     },
     {
@@ -118,7 +139,12 @@ export default function HospitalAdminHome() {
               <View
                 style={[styles.statIcon, { backgroundColor: `${s.color}18` }]}
               >
-                <Ionicons name={s.icon} size={20} color={s.color} />
+                <AppIcon
+                  name={s.icon}
+                  iconSet={s.iconSet}
+                  size={20}
+                  color={s.color}
+                />
               </View>
               <Text style={styles.statValue}>{s.value}</Text>
               <Text style={styles.statLabel}>{s.label}</Text>
@@ -137,7 +163,12 @@ export default function HospitalAdminHome() {
               activeOpacity={0.8}
             >
               <View style={styles.actionIcon}>
-                <Ionicons name={action.icon} size={26} color={colors.primary} />
+                <AppIcon
+                  name={action.icon}
+                  iconSet={action.iconSet}
+                  size={26}
+                  color={colors.primary}
+                />
               </View>
               <Text style={styles.actionLabel}>{action.label}</Text>
             </TouchableOpacity>
