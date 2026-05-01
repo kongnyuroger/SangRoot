@@ -19,7 +19,10 @@ function RootNavigationGuard() {
     const inBloodBankGroup = segments[0] === "(blood-bank-admin)";
     const inDoctorGroup = segments[0] === "(doctor)";
     const inProtectedGroup =
-      inHospitalGroup || inBloodBankGroup || inDoctorGroup;
+      inHospitalGroup ||
+      inBloodBankGroup ||
+      inDoctorGroup ||
+      segments[0] === "edit-profile";
 
     if (!isAuthenticated) {
       // Unauthenticated user trying to access a protected area → go to login
