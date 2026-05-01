@@ -252,7 +252,7 @@ export default function RegisterDonorScreen({
             <Input
               label="Phone *"
               icon="call-outline"
-              placeholder="+237 6XX XXX XXX"
+              placeholder="+237 67X XX XX XX"
               value={form.phone}
               onChangeText={set("phone")}
               keyboardType="phone-pad"

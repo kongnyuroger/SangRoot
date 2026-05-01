@@ -97,7 +97,7 @@ export default function BloodBankSettingsScreen() {
             onPress={() =>
               Alert.alert("Sign Out", "Are you sure?", [
                 { text: "Cancel", style: "cancel" },
-                { text: "Sign Out", style: "destructive", onPress: logout },
+                { text: "Log Out", style: "destructive", onPress: logout },
               ])
             }
           />

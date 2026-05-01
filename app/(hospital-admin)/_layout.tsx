@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { colors } from "../../src/constants/theme";
 
@@ -46,7 +46,11 @@ export default function HospitalAdminLayout() {
         options={{
           title: "Doctors",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medical-outline" size={size} color={color} />
+            <MaterialCommunityIcons
+              name="stethoscope"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
