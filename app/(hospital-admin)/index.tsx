@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -16,27 +17,7 @@ import {
   typography,
 } from "../../src/constants/theme";
 import { useAuth } from "../../src/context";
-
-const stats = [
-  {
-    label: "Donors",
-    value: "—",
-    icon: "people-outline" as const,
-    color: colors.primary,
-  },
-  {
-    label: "Doctors",
-    value: "—",
-    icon: "medical-outline" as const,
-    color: "#3B82F6",
-  },
-  {
-    label: "Requests",
-    value: "—",
-    icon: "water-outline" as const,
-    color: colors.alertRed,
-  },
-];
+import { api, safeRequest } from "../../src/lib/api";
 
 const quickActions = [
   {
@@ -64,10 +45,52 @@ function getGreeting() {
   return "Good evening";
 }
 
+type StatsData = {
+  doctors: number;
+  donors: number;
+  requests: number;
+};
+
 export default function HospitalAdminHome() {
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [statsData, setStatsData] = useState<StatsData | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await safeRequest(
+          api.get("hospitals/stats").json<StatsData>(),
+        );
+        setStatsData(data);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const displayStats = [
+    {
+      label: "Donors",
+      value: statsData ? statsData.donors.toString() : "—",
+      icon: "people-outline" as const,
+      color: colors.primary,
+    },
+    {
+      label: "Doctors",
+      value: statsData ? statsData.doctors.toString() : "—",
+      icon: "medical-outline" as const,
+      color: "#3B82F6",
+    },
+    {
+      label: "Requests",
+      value: statsData ? statsData.requests.toString() : "—",
+      icon: "water-outline" as const,
+      color: colors.alertRed,
+    },
+  ];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -90,7 +113,7 @@ export default function HospitalAdminHome() {
       >
         {/* Stats row */}
         <View style={styles.statsRow}>
-          {stats.map((s) => (
+          {displayStats.map((s) => (
             <Card key={s.label} style={styles.statCard} padding="md">
               <View
                 style={[styles.statIcon, { backgroundColor: `${s.color}18` }]}
