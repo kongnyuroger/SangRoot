@@ -1,16 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { colors } from "../../src/constants/theme";
 
 export default function DoctorLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#E31837",
-        tabBarInactiveTintColor: "#9CA3AF",
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.neutralGray,
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#E5E7EB",
+          backgroundColor: colors.white,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           height: 80,
           paddingBottom: 30,
@@ -62,6 +63,25 @@ export default function DoctorLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),
+        }}
+      />
+      {/* Hide screenshot files from tab bar */}
+      <Tabs.Screen
+        name="screens"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="requestFeedback"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="request-detail"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

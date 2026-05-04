@@ -245,7 +245,7 @@ export default function HistoryScreen() {
 
   const handleRequestPress = (requestId: string) => {
     router.push({
-      pathname: "/(doctor)/screens/request-detail",
+      pathname: "/_screens/request-detail",
       params: { id: requestId }
     });
   };
