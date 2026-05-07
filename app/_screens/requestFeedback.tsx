@@ -13,6 +13,16 @@ import {
 import { colors } from "../../src/constants/theme";
 import { feedbackService } from "../../src/services/feedback.service";
 import type { FeedbackResponse } from "../../src/types/feedback.types";
+
+// Convert blood type from A_POSITIVE to A+ or A_NEGATIVE to A-
+const formatBloodType = (bloodType: string) => {
+  if (!bloodType) return "N/A";
+  let result = bloodType;
+  result = result.replace(/_POSITIVE$/, "+");
+  result = result.replace(/_NEGATIVE$/, "-");
+  return result;
+};
+
 // Rating Stars Component
 const RatingStars = ({
   rating,
@@ -80,6 +90,9 @@ const ResponseSummary = ({ feedback }: { feedback: FeedbackResponse }) => {
     }
   };
 
+  // Get blood type in correct format
+  const bloodTypeDisplay = formatBloodType(summary.bloodType || "");
+
   return (
     <View className="bg-gray-50 rounded-xl p-4 mb-6">
       <Text className="text-lg font-bold text-gray-800 mb-3">
@@ -91,7 +104,7 @@ const ResponseSummary = ({ feedback }: { feedback: FeedbackResponse }) => {
         <View className="flex-row justify-between items-center mb-2">
           <Text className="text-sm text-gray-500">Blood Type</Text>
           <Text className="text-base font-semibold text-gray-800">
-            {summary.bloodType.replace("_", " ")}
+            {bloodTypeDisplay}
           </Text>
         </View>
         <View className="flex-row justify-between items-center mb-2">
@@ -141,25 +154,25 @@ const ResponseSummary = ({ feedback }: { feedback: FeedbackResponse }) => {
         <View className="flex-row justify-between items-center mb-2">
           <Text className="text-sm text-gray-500">Donors Contacted</Text>
           <Text className="text-base font-semibold text-gray-800">
-            {summary.donorSummary.total}
+            {summary.donorSummary?.total || 0}
           </Text>
         </View>
         <View className="flex-row justify-between items-center mb-2">
           <Text className="text-sm text-gray-500">Donors Available</Text>
           <Text className="text-base font-semibold text-green-600">
-            {summary.donorSummary.available}
+            {summary.donorSummary?.available || 0}
           </Text>
         </View>
         <View className="flex-row justify-between items-center mb-2">
           <Text className="text-sm text-gray-500">Blood Banks Contacted</Text>
           <Text className="text-base font-semibold text-gray-800">
-            {summary.bloodBankSummary.total}
+            {summary.bloodBankSummary?.total || 0}
           </Text>
         </View>
         <View className="flex-row justify-between items-center">
           <Text className="text-sm text-gray-500">Blood Banks with Stock</Text>
           <Text className="text-base font-semibold text-green-600">
-            {summary.bloodBankSummary.available}
+            {summary.bloodBankSummary?.available || 0}
           </Text>
         </View>
       </View>
@@ -205,7 +218,6 @@ export default function RequestFeedbackScreen() {
       const existingFeedback = await feedbackService.getByRequestId(requestId);
       if (existingFeedback) {
         setFeedback(existingFeedback);
-        // Populate form with existing feedback
         setFormData({
           responseAccuracy: existingFeedback.responseAccuracy,
           responseSpeed: existingFeedback.responseSpeed,
@@ -227,7 +239,6 @@ export default function RequestFeedbackScreen() {
   const handleSubmit = async () => {
     if (!requestId) return;
 
-    // Validate at least one rating
     const hasRating =
       formData.responseAccuracy ||
       formData.responseSpeed ||

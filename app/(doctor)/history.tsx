@@ -9,9 +9,18 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
 } from "react-native";
 import { colors } from "../../src/constants/theme";
 import { bloodRequestService, BloodRequest } from "../../src/services/blood-request.service";
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Convert blood type from A_POSITIVE to A+ or A_NEGATIVE to A-
+const formatBloodType = (bloodType: string) => {
+  if (!bloodType) return "N/A";
+  return bloodType.replace("_POSITIVE", "+").replace("_NEGATIVE", "-");
+};
 
 // Status badge component
 const StatusBadge = ({ status }: { status: string }) => {
@@ -35,7 +44,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   const config = getStatusConfig();
   
   return (
-    <View className={`px-2 py-1 rounded-full flex-row items-center gap-1`} style={{ backgroundColor: config.bg }}>
+    <View className="px-2 py-1 rounded-full flex-row items-center gap-1 self-start" style={{ backgroundColor: config.bg }}>
       <Ionicons name={config.icon as any} size={12} color={config.text} />
       <Text className="text-xs font-medium" style={{ color: config.text }}>
         {config.label}
@@ -60,7 +69,7 @@ const UrgencyBadge = ({ urgency }: { urgency: string }) => {
   const config = getUrgencyConfig();
   
   return (
-    <View className={`px-2 py-1 rounded-full flex-row items-center gap-1`} style={{ backgroundColor: config.bg }}>
+    <View className="px-2 py-1 rounded-full flex-row items-center gap-1 self-start" style={{ backgroundColor: config.bg }}>
       <Ionicons name={config.icon as any} size={12} color={config.text} />
       <Text className="text-xs font-medium" style={{ color: config.text }}>
         {config.label}
@@ -69,8 +78,8 @@ const UrgencyBadge = ({ urgency }: { urgency: string }) => {
   );
 };
 
-// Request card component
-const RequestCard = ({ request, onPress }: { request: BloodRequest; onPress: () => void }) => {
+// Request card component - NOT CLICKABLE
+const RequestCard = ({ request }: { request: BloodRequest }) => {
   const getBloodTypeColor = (bloodType: string) => {
     const colors: Record<string, string> = {
       'O_NEGATIVE': '#DC2626',
@@ -85,25 +94,21 @@ const RequestCard = ({ request, onPress }: { request: BloodRequest; onPress: () 
     return colors[bloodType] || '#6B7280';
   };
 
-  const bloodTypeDisplay = request.bloodGroup.replace('_', ' ');
+  const bloodTypeDisplay = formatBloodType(request.bloodGroup);
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
-      activeOpacity={0.7}
-    >
+    <View className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
       <View className="flex-row justify-between items-start mb-2">
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center gap-2 flex-1">
           <View
-            className="w-10 h-10 rounded-full items-center justify-center"
+            className="w-10 h-10 rounded-full items-center justify-center flex-shrink-0"
             style={{ backgroundColor: getBloodTypeColor(request.bloodGroup) + '20' }}
           >
             <Text className="font-bold text-sm" style={{ color: getBloodTypeColor(request.bloodGroup) }}>
               {bloodTypeDisplay}
             </Text>
           </View>
-          <View>
+          <View className="flex-1">
             <Text className="font-semibold text-gray-800">{request.unitsRequired} units needed</Text>
             <Text className="text-xs text-gray-500">{request.timeAgo || request.formattedDate}</Text>
           </View>
@@ -113,8 +118,8 @@ const RequestCard = ({ request, onPress }: { request: BloodRequest; onPress: () 
 
       <View className="flex-row justify-between items-center mt-2">
         <View className="flex-1">
-          <Text className="text-sm text-gray-600">Patient: {request.patientName}, {request.patientAge}y</Text>
-          <Text className="text-sm text-gray-600">{request.hospitalName}</Text>
+          <Text className="text-sm text-gray-600" numberOfLines={1}>Patient: {request.patientName}, {request.patientAge}y</Text>
+          <Text className="text-sm text-gray-600 mt-1" numberOfLines={1}>{request.hospitalName}</Text>
         </View>
         <UrgencyBadge urgency={request.urgency} />
       </View>
@@ -135,30 +140,52 @@ const RequestCard = ({ request, onPress }: { request: BloodRequest; onPress: () 
           </View>
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };
 
 // Empty state component
-const EmptyState = ({ onRefresh }: { onRefresh: () => void }) => (
-  <View className="flex-1 justify-center items-center py-12">
-    <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-      <Ionicons name="document-text-outline" size={40} color={colors.neutralGray} />
-    </View>
-    <Text className="text-lg font-semibold text-gray-700 mb-2">No requests yet</Text>
-    <Text className="text-sm text-gray-500 text-center px-8 mb-6">
-      You haven't made any blood requests. Tap the Request tab to create one.
-    </Text>
-    <TouchableOpacity
-      onPress={onRefresh}
-      className="bg-[#E31837] px-6 py-3 rounded-xl"
-    >
-      <Text className="text-white font-medium">Refresh</Text>
-    </TouchableOpacity>
-  </View>
-);
+const EmptyState = ({ onRefresh, filter }: { onRefresh: () => void; filter: string }) => {
+  const getFilterMessage = () => {
+    switch (filter) {
+      case 'ALL': return 'No requests yet';
+      case 'PENDING': return 'No pending requests';
+      case 'IN_PROGRESS': return 'No in-progress requests';
+      case 'FULFILLED': return 'No fulfilled requests';
+      case 'CANCELLED': return 'No cancelled requests';
+      default: return 'No requests found';
+    }
+  };
 
-// Filter chips component
+  const getFilterSubMessage = () => {
+    switch (filter) {
+      case 'ALL': return "You haven't made any blood requests. Tap the Request tab to create one.";
+      default: return `No blood requests with status "${filter}" found. Try a different filter.`;
+    }
+  };
+
+  return (
+    <View className="flex-1 justify-center items-center py-12">
+      <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
+        <Ionicons name="document-text-outline" size={40} color={colors.neutralGray} />
+      </View>
+      <Text className="text-lg font-semibold text-gray-700 mb-2">
+        {getFilterMessage()}
+      </Text>
+      <Text className="text-sm text-gray-500 text-center px-8 mb-6">
+        {getFilterSubMessage()}
+      </Text>
+      <TouchableOpacity
+        onPress={onRefresh}
+        className="bg-[#E31837] px-6 py-3 rounded-xl"
+      >
+        <Text className="text-white font-medium">Refresh</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// Filter chips component - FIXED VERSION
 const FilterChips = ({ selectedFilter, onFilterChange }: { selectedFilter: string; onFilterChange: (filter: string) => void }) => {
   const filters = [
     { id: 'ALL', label: 'All' },
@@ -169,34 +196,45 @@ const FilterChips = ({ selectedFilter, onFilterChange }: { selectedFilter: strin
   ];
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-      <View className="flex-row gap-2 px-4">
-        {filters.map((filter) => (
-          <TouchableOpacity
-            key={filter.id}
-            onPress={() => onFilterChange(filter.id)}
-            className={`px-4 py-2 rounded-full ${
-              selectedFilter === filter.id
-                ? 'bg-[#E31837]'
-                : 'bg-gray-100'
-            }`}
-          >
-            <Text
-              className={`text-sm font-medium ${
-                selectedFilter === filter.id ? 'text-white' : 'text-gray-600'
-              }`}
+    <View className="mb-4">
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}
+      >
+        <View className="flex-row gap-2">
+          {filters.map((filter) => (
+            <TouchableOpacity
+              key={filter.id}
+              onPress={() => onFilterChange(filter.id)}
+              activeOpacity={0.7}
+              style={{
+                backgroundColor: selectedFilter === filter.id ? colors.primary : '#F3F4F6',
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
+                minWidth: 80,
+              }}
             >
-              {filter.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+              <Text
+                style={{
+                  color: selectedFilter === filter.id ? '#FFFFFF' : '#6B7280',
+                  fontSize: 14,
+                  fontWeight: '600',
+                  textAlign: 'center',
+                }}
+              >
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
 export default function HistoryScreen() {
-  const router = useRouter();
   const [requests, setRequests] = useState<BloodRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -243,13 +281,6 @@ export default function HistoryScreen() {
     loadRequests(1, filter);
   };
 
-  const handleRequestPress = (requestId: string) => {
-    router.push({
-      pathname: "/_screens/request-detail",
-      params: { id: requestId }
-    });
-  };
-
   const loadMore = () => {
     if (pagination.hasNextPage && !loading) {
       loadRequests(pagination.page + 1, selectedFilter);
@@ -275,28 +306,24 @@ export default function HistoryScreen() {
         </Text>
       </View>
 
-      {/* Filters */}
+      {/* Filters - FIXED */}
       <FilterChips selectedFilter={selectedFilter} onFilterChange={handleFilterChange} />
 
       {/* Requests List */}
       {requests.length === 0 ? (
-        <EmptyState onRefresh={onRefresh} />
+        <EmptyState onRefresh={onRefresh} filter={selectedFilter} />
       ) : (
         <FlatList
           data={requests}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <RequestCard
-              request={item}
-              onPress={() => handleRequestPress(item.id)}
-            />
-          )}
-          contentContainerStyle={{ padding: 16 }}
+          renderItem={({ item }) => <RequestCard request={item} />}
+          contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 32 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
           ListFooterComponent={
             pagination.hasNextPage ? (
               <View className="py-4">
