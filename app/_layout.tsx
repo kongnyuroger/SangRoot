@@ -41,11 +41,11 @@ function RootNavigationGuard() {
     if (isAuthenticated && isProfileComplete && inAuthGroup) {
       const userRole = role as string;
       if (userRole === "HOSPITAL") {
-        router.replace({ pathname: "/(hospital-admin)/" });
+        router.replace({ pathname: "/(hospital-admin)" });
       } else if (userRole === "BLOOD_BANK") {
-        router.replace({ pathname: "/(blood-bank-admin)/" });
+        router.replace({ pathname: "/(blood-bank-admin)" });
       } else if (userRole === "DOCTOR") {
-        router.replace({ pathname: "/(doctor)/" });
+        router.replace({ pathname: "/(doctor)" });
       }
     }
   }, [isAuthenticated, isProfileComplete, isLoading, role, segments]);
