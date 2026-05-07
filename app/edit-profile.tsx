@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -11,10 +12,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Card, Input } from "../../src/components/ui";
-import { colors, spacing, typography } from "../../src/constants/theme";
-import { useAuth } from "../../src/context";
-import { api, safeRequest } from "../../src/lib/api";
+import { Button, Card, Input } from "../src/components/ui";
+import { colors, spacing, typography } from "../src/constants/theme";
+import { useAuth } from "../src/context";
+import { api, safeRequest } from "../src/lib/api";
 
 interface ProfileForm {
   name: string;
@@ -58,13 +59,23 @@ const REGIONS = [
   "SOUTH_WEST",
 ];
 
-export default function CompleteProfileScreen() {
+export default function EditProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { role, refreshUser } = useAuth();
+  const { role, refreshUser, user } = useAuth();
+
   const [formData, setFormData] = useState<ProfileForm>(INITIAL);
   const [errors, setErrors] = useState<Partial<ProfileForm>>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.profile) {
+      setFormData({
+        ...INITIAL,
+        ...user.profile,
+      } as unknown as ProfileForm);
+    }
+  }, [user]);
 
   const isDoctor = role === "DOCTOR";
   const entityType = isDoctor
@@ -80,39 +91,25 @@ export default function CompleteProfileScreen() {
 
   const validate = () => {
     const e: Partial<ProfileForm> = {};
-    if (!formData.name.trim()) e.name = "Full name is required";
-    if (!formData.phone.trim()) e.phone = "Phone is required";
+    if (!formData.name?.trim()) e.name = "Full name is required";
+    if (!formData.phone?.trim()) e.phone = "Phone is required";
     else if (!/^\+?[\d\s\-()]{7,}$/.test(formData.phone))
       e.phone = "Enter a valid phone number";
 
     if (isDoctor) {
-      if (!formData.specialization.trim())
+      if (!formData.specialization?.trim())
         e.specialization = "Specialization is required";
-      if (!formData.registrationNo.trim())
+      if (!formData.registrationNo?.trim())
         e.registrationNo = "Registration number is required";
     } else {
       if (!formData.region) e.region = "Region is required";
-      if (!formData.town.trim()) e.town = "Town is required";
-      if (!formData.address.trim()) e.address = "Address is required";
+      if (!formData.town?.trim()) e.town = "Town is required";
+      if (!formData.address?.trim()) e.address = "Address is required";
     }
 
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
-  const getFieldsToVerify = () => {
-    if (isDoctor) {
-      return ["name", "phone", "specialization", "registrationNo"];
-    }
-    return ["name", "region", "town", "phone"];
-  };
-
-  // Completion progress
-  const fieldsToVerify = getFieldsToVerify();
-  const filled = fieldsToVerify.filter(
-    (f) => !!formData[f as keyof ProfileForm],
-  ).length;
-  const progress = Math.round((filled / fieldsToVerify.length) * 100);
 
   const handleSubmit = async () => {
     if (!validate()) return;
@@ -122,7 +119,6 @@ export default function CompleteProfileScreen() {
       if (role === "BLOOD_BANK") endpoint = "blood-banks/profile";
       if (role === "DOCTOR") endpoint = "doctors/profile";
 
-      // Prepare payload based on role
       const payload = isDoctor
         ? {
             name: formData.name,
@@ -144,6 +140,9 @@ export default function CompleteProfileScreen() {
 
       await safeRequest(api.patch(endpoint, { json: payload }));
       await refreshUser();
+      Alert.alert("Success", "Profile updated successfully!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to save profile";
       Alert.alert("Submission Error", msg);
@@ -158,17 +157,15 @@ export default function CompleteProfileScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* Sticky header */}
-        <View style={styles.stickyHeader}>
-          <Text style={styles.headerTitle}>Complete Profile</Text>
-          <Text style={styles.headerSub}>
-            Required before accessing your dashboard
-          </Text>
-          {/* Progress bar */}
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
-          </View>
-          <Text style={styles.progressLabel}>{progress}% complete</Text>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <View style={{ width: 24 }} />
         </View>
 
         <ScrollView
@@ -233,7 +230,7 @@ export default function CompleteProfileScreen() {
             <Input
               label="Phone *"
               icon="call-outline"
-              placeholder="+237 67X XX XX XX"
+              placeholder="+91 00000 00000"
               value={formData.phone}
               onChangeText={set("phone")}
               keyboardType="phone-pad"
@@ -309,12 +306,12 @@ export default function CompleteProfileScreen() {
           </Card>
 
           <Button
-            title="Save & Continue"
+            title="Save Changes"
             onPress={handleSubmit}
             loading={isLoading}
             disabled={isLoading}
             size="lg"
-            icon="checkmark-circle-outline"
+            icon="save-outline"
           />
 
           <View style={styles.spacer} />
@@ -327,41 +324,24 @@ export default function CompleteProfileScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
-  stickyHeader: {
-    backgroundColor: colors.primary,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing["2xl"],
-    paddingTop: spacing.lg,
-    paddingBottom: spacing["2xl"],
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingVertical: spacing.xl,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backBtn: {
+    padding: spacing.xs,
+    marginLeft: -spacing.xs,
   },
   headerTitle: {
-    fontSize: typography.fontSize["2xl"],
+    fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.bold,
-    color: colors.white,
-    marginBottom: spacing.xs,
-  },
-  headerSub: {
-    fontSize: typography.fontSize.sm,
-    color: "rgba(255,255,255,0.75)",
-    marginBottom: spacing.lg,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: colors.white,
-    borderRadius: 3,
-  },
-  progressLabel: {
-    fontSize: typography.fontSize.xs,
-    color: "rgba(255,255,255,0.75)",
-    marginTop: spacing.sm,
-    textAlign: "right",
+    color: colors.textPrimary,
   },
   scrollContent: {
     padding: spacing["2xl"],

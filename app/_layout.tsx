@@ -17,7 +17,11 @@ function RootNavigationGuard() {
     const inHospitalGroup = segments[0] === "(hospital-admin)";
     const inBloodBankGroup = segments[0] === "(blood-bank-admin)";
     const inDoctorGroup = segments[0] === "(doctor)";
-    const inProtectedGroup = inHospitalGroup || inBloodBankGroup || inDoctorGroup;
+    const inProtectedGroup =
+      inHospitalGroup ||
+      inBloodBankGroup ||
+      inDoctorGroup ||
+      segments[0] === "edit-profile";
 
     if (!isAuthenticated) {
       if (inProtectedGroup) {

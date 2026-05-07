@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,6 +14,7 @@ import { useAuth } from "../../src/context";
 
 export default function HospitalSettingsScreen() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const handleLogout = () => {
@@ -98,6 +100,13 @@ export default function HospitalSettingsScreen() {
         {/* Actions */}
         <Card padding="lg" variant="outlined">
           <Text style={styles.sectionLabel}>Account</Text>
+          <Button
+            title="Edit Profile"
+            icon="create-outline"
+            variant="outline"
+            onPress={() => router.push("/edit-profile")}
+            style={{ marginBottom: spacing.md }}
+          />
           <Button
             title="Sign Out"
             icon="log-out-outline"

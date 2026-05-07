@@ -1,5 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -16,27 +17,7 @@ import {
   typography,
 } from "../../src/constants/theme";
 import { useAuth } from "../../src/context";
-
-const stats = [
-  {
-    label: "Donors",
-    value: "—",
-    icon: "people-outline" as const,
-    color: colors.primary,
-  },
-  {
-    label: "Doctors",
-    value: "—",
-    icon: "medical-outline" as const,
-    color: "#3B82F6",
-  },
-  {
-    label: "Requests",
-    value: "—",
-    icon: "water-outline" as const,
-    color: colors.alertRed,
-  },
-];
+import { api, safeRequest } from "../../src/lib/api";
 
 const quickActions = [
   {
@@ -46,7 +27,8 @@ const quickActions = [
   },
   {
     label: "Invite Doctor",
-    icon: "mail-outline" as const,
+    icon: "stethoscope" as const,
+    iconSet: "material" as const,
     route: "./invite-doctors",
   },
   {
@@ -64,10 +46,72 @@ function getGreeting() {
   return "Good evening";
 }
 
+function AppIcon({
+  name,
+  iconSet,
+  size,
+  color,
+}: {
+  name: string;
+  iconSet?: "material";
+  size: number;
+  color: string;
+}) {
+  if (iconSet === "material") {
+    return (
+      <MaterialCommunityIcons name={name as any} size={size} color={color} />
+    );
+  }
+  return <Ionicons name={name as any} size={size} color={color} />;
+}
+
+type StatsData = {
+  doctors: number;
+  donors: number;
+  requests: number;
+};
+
 export default function HospitalAdminHome() {
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [statsData, setStatsData] = useState<StatsData | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await safeRequest(
+          api.get("hospitals/stats").json<StatsData>(),
+        );
+        setStatsData(data);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const displayStats = [
+    {
+      label: "Donors",
+      value: statsData ? statsData.donors.toString() : "—",
+      icon: "people-outline" as const,
+      color: colors.primary,
+    },
+    {
+      label: "Doctors",
+      value: statsData ? statsData.doctors.toString() : "—",
+      icon: "stethoscope" as const,
+      iconSet: "material" as const,
+      color: "#3B82F6",
+    },
+    {
+      label: "Requests",
+      value: statsData ? statsData.requests.toString() : "—",
+      icon: "water-outline" as const,
+      color: colors.alertRed,
+    },
+  ];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -90,12 +134,17 @@ export default function HospitalAdminHome() {
       >
         {/* Stats row */}
         <View style={styles.statsRow}>
-          {stats.map((s) => (
+          {displayStats.map((s) => (
             <Card key={s.label} style={styles.statCard} padding="md">
               <View
                 style={[styles.statIcon, { backgroundColor: `${s.color}18` }]}
               >
-                <Ionicons name={s.icon} size={20} color={s.color} />
+                <AppIcon
+                  name={s.icon}
+                  iconSet={s.iconSet}
+                  size={20}
+                  color={s.color}
+                />
               </View>
               <Text style={styles.statValue}>{s.value}</Text>
               <Text style={styles.statLabel}>{s.label}</Text>
@@ -114,7 +163,12 @@ export default function HospitalAdminHome() {
               activeOpacity={0.8}
             >
               <View style={styles.actionIcon}>
-                <Ionicons name={action.icon} size={26} color={colors.primary} />
+                <AppIcon
+                  name={action.icon}
+                  iconSet={action.iconSet}
+                  size={26}
+                  color={colors.primary}
+                />
               </View>
               <Text style={styles.actionLabel}>{action.label}</Text>
             </TouchableOpacity>
