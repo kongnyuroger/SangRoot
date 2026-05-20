@@ -10,7 +10,6 @@ function RootNavigationGuard() {
   const segments = useSegments();
   const router = useRouter();
 
-  // biome-ignore lint: correctness/useExhaustiveDependencies
   useEffect(() => {
     if (isLoading) return;
 
@@ -25,17 +24,14 @@ function RootNavigationGuard() {
       segments[0] === "edit-profile";
 
     if (!isAuthenticated) {
-      // Unauthenticated user trying to access a protected area → go to login
       if (inProtectedGroup) {
         router.replace("/(auth)/login");
       }
       return;
     }
 
-    // Authenticated but profile incomplete → block on complete-profile
     if (!isProfileComplete && role !== "DOCTOR") {
-      const isOnCompleteProfile =
-        inAuthGroup && segments[1] === "complete-profile";
+      const isOnCompleteProfile = inAuthGroup && segments[1] === "complete-profile";
       if (!isOnCompleteProfile) {
         router.replace({
           pathname: "/(auth)/complete-profile",
@@ -45,14 +41,15 @@ function RootNavigationGuard() {
       return;
     }
 
-    // Authenticated + complete → redirect away from auth screens to their dashboard
+    // Fix: Use role string comparison safely
     if (isAuthenticated && isProfileComplete && inAuthGroup) {
-      if (role === "HOSPITAL") {
-        router.replace("/(hospital-admin)/");
-      } else if (role === "BLOOD_BANK") {
-        router.replace("/(blood-bank-admin)/");
-      } else if (role === "DOCTOR") {
-        router.replace("/(doctor)/");
+      const userRole = role as string;
+      if (userRole === "HOSPITAL") {
+        router.replace({ pathname: "/(hospital-admin)" });
+      } else if (userRole === "BLOOD_BANK") {
+        router.replace({ pathname: "/(blood-bank-admin)" });
+      } else if (userRole === "DOCTOR") {
+        router.replace({ pathname: "/(doctor)" });
       }
     }
   }, [isAuthenticated, isProfileComplete, isLoading, role, segments]);
@@ -65,7 +62,12 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RootNavigationGuard />
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(doctor)" options={{ headerShown: false }} />
+          <Stack.Screen name="(hospital-admin)" options={{ headerShown: false }} />
+          <Stack.Screen name="(blood-bank-admin)" options={{ headerShown: false }} />
+        </Stack>
       </AuthProvider>
     </QueryClientProvider>
   );

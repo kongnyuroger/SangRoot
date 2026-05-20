@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { colors } from "../../src/constants/theme";
+import { colors } from "../../../SangRoot/src/constants/theme";
 
 export default function DoctorLayout() {
   return (
